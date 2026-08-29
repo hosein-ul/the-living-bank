@@ -1,0 +1,102 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --paper: #f4f1ea;
+  --paper-deep: #e9e4d8;
+  --ink: #1a1a18;
+  --ink-60: rgba(26, 26, 24, 0.6);
+  --gold: #b08d2e;
+  --gold-bright: #c9a961;
+  --green: #3d6b4f;
+  --red: #a33b2e;
+  --amber: #b57e2e;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background-color: #f4f1ea;
+  color: #1a1a18;
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: #f4f1ea;
+  color: #1a1a18;
+  font-family: var(--font-fraunces), Georgia, serif;
+  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background-color: #c9a961;
+  color: #1a1a18;
+}
+
+:focus-visible {
+  outline: 2px solid #b08d2e;
+  outline-offset: 2px;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+  outline: 2px solid #b08d2e !important;
+  outline-offset: 2px !important;
+}
+
+/* Typography styles */
+.font-mono-num {
+  font-family: var(--font-ibm-plex-mono), monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+.takeaway-text {
+  font-family: var(--font-fraunces), serif;
+  font-style: italic;
+  color: #b08d2e;
+}
+
+/* Shake animation for SLAM */
+@keyframes scene-shake {
+  0% { transform: translate(0, 0); }
+  25% { transform: translate(-2px, 1px); }
+  50% { transform: translate(2px, -1px); }
+  75% { transform: translate(-1px, 2px); }
+  100% { transform: translate(0, 0); }
+}
+
+.animate-shake {
+  animation: scene-shake 120ms ease-in-out;
+}
+
+@keyframes pulse-live {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+.animate-live-dot {
+  animation: pulse-live 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .animate-shake,
+  .animate-live-dot {
+    animation: none !important;
+  }
+}
