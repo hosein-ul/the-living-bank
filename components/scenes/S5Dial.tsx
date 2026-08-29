@@ -1,10 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
+import { motion, useScroll } from "framer-motion";
 import { useSim } from "../sim/SimProvider";
 import { Dial } from "../atoms/Dial";
 import { CHAPTERS_CONTENT } from "@/content/chapters";
 import { sound } from "@/lib/sound";
+import { EASINGS } from "@/lib/easings";
 
 export const S5Dial: React.FC = () => {
   const content = CHAPTERS_CONTENT.s5;
@@ -16,21 +18,25 @@ export const S5Dial: React.FC = () => {
     advanceEpoch: s.advanceEpoch,
   }));
 
+  const containerRef = useRef<HTMLElement>(null);
   const [isShaking, setIsShaking] = useState(false);
 
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start start", "end end"],
+  });
+
   const handleInflow = () => {
-    advanceEpoch(0.35); // Sustained positive flow triggers +0.25 raise
+    advanceEpoch(0.35);
     setRegime("EXPANSION");
-    sound.playTick();
+    sound.playRatchet();
   };
 
   const handleOutflow = () => {
-    // Negative signal slams rate to half immediately
     advanceEpoch(-0.75);
     setRegime("CONTRACTION");
     sound.playThud();
 
-    // 120ms scene shake on slam per §3 spec
     setIsShaking(true);
     setTimeout(() => setIsShaking(false), 120);
   };
@@ -38,39 +44,59 @@ export const S5Dial: React.FC = () => {
   return (
     <section
       id="chapter-5"
-      className={`relative min-h-screen py-24 px-6 sm:px-12 lg:px-16 border-t border-ink/10 flex items-center justify-center bg-paper transition-transform ${
+      ref={containerRef}
+      className={`relative min-h-[260vh] border-t border-ink/10 bg-paper transition-transform ${
         isShaking ? "animate-shake" : ""
       }`}
     >
-      <div className="w-full max-w-7xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-12">
-        {/* Copy Column (~40% desktop) */}
-        <div className="w-full lg:w-[42%] flex flex-col justify-center order-2 lg:order-1">
-          <div className="mb-3">
-            <span className="font-mono text-xs uppercase tracking-widest text-gold font-semibold">
+      <div className="sticky top-0 h-screen w-full flex flex-col lg:flex-row items-center justify-between p-6 sm:p-12 lg:p-16 max-w-7xl mx-auto overflow-hidden">
+        {/* Copy Column (~42% desktop) */}
+        <div className="w-full lg:w-[42%] flex flex-col justify-center order-2 lg:order-1 mt-6 lg:mt-0 z-10">
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, ease: EASINGS.smooth }}
+            className="mb-3"
+          >
+            <span className="font-mono text-xs uppercase tracking-widest text-gold font-semibold flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-gold" />
               CHAPTER {content.numeral} · {content.title}
             </span>
-          </div>
+          </motion.div>
 
-          <p className="font-serif text-lg sm:text-xl text-ink leading-relaxed max-w-[34ch] mb-6">
+          <motion.p
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.1, ease: EASINGS.smooth }}
+            className="font-serif text-lg sm:text-xl text-ink leading-relaxed max-w-[34ch] mb-6"
+          >
             {content.copy}
-          </p>
+          </motion.p>
 
-          <div className="border-l-2 border-gold pl-4 py-1">
+          <motion.div
+            initial={{ opacity: 0, x: -12 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.2, ease: EASINGS.smooth }}
+            className="border-l-2 border-gold pl-4 py-1"
+          >
             <p className="font-serif italic text-lg sm:text-xl text-gold font-medium">
               &ldquo;{content.takeaway}&rdquo;
             </p>
-          </div>
+          </motion.div>
         </div>
 
-        {/* Stage (~60% desktop) */}
-        <div className="w-full lg:w-[56%] flex flex-col items-center justify-center order-1 lg:order-2 bg-paper-deep/40 p-6 sm:p-8 rounded border border-ink/15 shadow-sm">
+        {/* Stage (~56% desktop) */}
+        <div className="w-full lg:w-[56%] flex flex-col items-center justify-center order-1 lg:order-2 bg-paper-deep/50 p-6 sm:p-8 rounded-lg border border-ink/15 shadow-[0_12px_32px_rgba(26,26,24,0.06)]">
           {/* Regime Badge */}
-          <div className="mb-4 flex items-center gap-2">
-            <span className="font-mono text-[10px] uppercase text-ink-60 tracking-wider">
+          <div className="mb-4 flex items-center gap-2.5">
+            <span className="font-mono text-[10px] sm:text-xs uppercase text-ink-60 tracking-wider font-semibold">
               Bank Regime:
             </span>
             <span
-              className={`px-3 py-1 rounded text-xs font-mono font-bold tracking-wider uppercase transition-colors duration-240 ${
+              className={`px-3 py-1 rounded text-xs font-mono font-bold tracking-wider uppercase transition-colors duration-240 shadow-sm ${
                 regime === "EXPANSION"
                   ? "bg-green text-paper"
                   : "bg-red text-paper"
@@ -89,17 +115,17 @@ export const S5Dial: React.FC = () => {
 
           {/* Two-position Brass Lever */}
           <div className="mt-8 flex flex-col items-center w-full">
-            <span className="font-mono text-[10px] uppercase tracking-widest text-ink-60 mb-2">
+            <span className="font-mono text-[10px] uppercase tracking-widest text-ink-60 mb-2.5 font-semibold">
               Policy Lever (INFLOW ⇄ OUTFLOW)
             </span>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 w-full sm:w-auto">
               <button
                 onClick={handleInflow}
                 aria-label="Push Inflow (Small earned raise)"
-                className={`px-5 py-2.5 rounded font-mono text-xs font-semibold tracking-wider uppercase transition-all duration-240 ${
+                className={`flex-1 sm:flex-initial px-5 py-3 rounded font-mono text-xs font-bold tracking-wider uppercase transition-all duration-240 cursor-pointer ${
                   regime === "EXPANSION"
-                    ? "bg-green text-paper shadow"
+                    ? "bg-green text-paper shadow-md hover:shadow-lg"
                     : "bg-paper-deep text-ink-60 border border-ink/20 hover:border-green hover:text-green"
                 }`}
               >
@@ -109,9 +135,9 @@ export const S5Dial: React.FC = () => {
               <button
                 onClick={handleOutflow}
                 aria-label="Pull Outflow (Instant cut & slam)"
-                className={`px-5 py-2.5 rounded font-mono text-xs font-semibold tracking-wider uppercase transition-all duration-240 ${
+                className={`flex-1 sm:flex-initial px-5 py-3 rounded font-mono text-xs font-bold tracking-wider uppercase transition-all duration-240 cursor-pointer ${
                   regime === "CONTRACTION"
-                    ? "bg-red text-paper shadow"
+                    ? "bg-red text-paper shadow-md hover:shadow-lg"
                     : "bg-paper-deep text-ink-60 border border-ink/20 hover:border-red hover:text-red"
                 }`}
               >

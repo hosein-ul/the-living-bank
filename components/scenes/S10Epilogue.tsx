@@ -2,12 +2,14 @@
 
 import React, { useRef, useState } from "react";
 import { motion } from "framer-motion";
+import confetti from "canvas-confetti";
 import { useSim } from "../sim/SimProvider";
 import { WaxSeal } from "../atoms/WaxSeal";
 import { Receipt } from "../atoms/Receipt";
 import { formatNumber } from "../sim/formatters";
 import { CHAPTERS_CONTENT } from "@/content/chapters";
 import { sound } from "@/lib/sound";
+import { EASINGS } from "@/lib/easings";
 
 export const S10Epilogue: React.FC = () => {
   const content = CHAPTERS_CONTENT.s10;
@@ -33,6 +35,17 @@ export const S10Epilogue: React.FC = () => {
   const handleExportShareCard = () => {
     setExporting(true);
     sound.playThud();
+    sound.playCelebration();
+
+    if (typeof window !== "undefined") {
+      confetti({
+        particleCount: 60,
+        spread: 80,
+        origin: { y: 0.6 },
+        colors: ["#b08d2e", "#c9a961", "#e9e4d8", "#8c6d1d"],
+        disableForReducedMotion: true,
+      });
+    }
 
     const canvas = document.createElement("canvas");
     canvas.width = 1080;
@@ -109,11 +122,21 @@ export const S10Epilogue: React.FC = () => {
       { label: "YOU EARNED", value: `${formatNumber(balance)} $STD` },
       {
         label: "RUN OUTCOME",
-        value: runChoice === "STAY" ? "STAYED (COLLECTED)" : runChoice === "WITHDRAW" ? "WITHDREW (PAID TOLL)" : "QUIET EPOCH",
+        value:
+          runChoice === "STAY"
+            ? "STAYED (COLLECTED)"
+            : runChoice === "WITHDRAW"
+            ? "WITHDREW (PAID TOLL)"
+            : "QUIET EPOCH",
       },
       {
         label: "SETTLEMENT",
-        value: runChoice === "STAY" ? `+${formatNumber(runRewardOrFeePaid || 3214)} $STD` : runChoice === "WITHDRAW" ? `-${formatNumber(runRewardOrFeePaid)} $STD` : "N/A",
+        value:
+          runChoice === "STAY"
+            ? `+${formatNumber(runRewardOrFeePaid || 3214)} $STD`
+            : runChoice === "WITHDRAW"
+            ? `-${formatNumber(runRewardOrFeePaid)} $STD`
+            : "N/A",
       },
     ];
 
@@ -151,7 +174,6 @@ export const S10Epilogue: React.FC = () => {
     ctx.font = "italic 15px serif";
     ctx.fillText("Supply has one direction: down.", 540, 930);
 
-    // Download triggered
     const dataUrl = canvas.toDataURL("image/png");
     const a = document.createElement("a");
     a.href = dataUrl;
@@ -171,26 +193,45 @@ export const S10Epilogue: React.FC = () => {
       <div className="w-full max-w-4xl mx-auto flex flex-col items-center">
         {/* Seal Stamp */}
         <motion.div
-          initial={{ scale: 1.6, filter: "blur(8px)", opacity: 0 }}
-          animate={{ scale: 1, filter: "blur(0px)", opacity: 1 }}
-          transition={{ duration: 0.64 }}
+          initial={{ scale: 1.8, filter: "blur(6px)", opacity: 0 }}
+          whileInView={{ scale: 1, filter: "blur(0px)", opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.64, ease: EASINGS.stamp }}
           className="mb-6"
         >
-          <WaxSeal text="EXPERIENCED" subtext="RESERVE" size={90} />
+          <WaxSeal text="EXPERIENCED" subtext="RESERVE" size={96} animateStamp />
         </motion.div>
 
         {/* Title */}
-        <h2 className="font-serif text-3xl sm:text-5xl font-semibold tracking-tight text-ink mb-4">
+        <motion.h2
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, ease: EASINGS.smooth }}
+          className="font-serif text-3xl sm:text-5xl font-semibold tracking-tight text-ink mb-4"
+        >
           {content.title}
-        </h2>
+        </motion.h2>
 
         {/* Copy (Verbatim) */}
-        <p className="font-serif text-base sm:text-xl text-ink leading-relaxed max-w-[34ch] mx-auto mb-8">
+        <motion.p
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.1, ease: EASINGS.smooth }}
+          className="font-serif text-base sm:text-xl text-ink leading-relaxed max-w-[34ch] mx-auto mb-8"
+        >
           {content.copy}
-        </p>
+        </motion.p>
 
         {/* Paper Receipt Summary Card */}
-        <div className="mb-8 w-full max-w-md">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.2, ease: EASINGS.smooth }}
+          className="mb-8 w-full max-w-md"
+        >
           <Receipt
             title={content.receiptTitle}
             lines={[
@@ -200,7 +241,12 @@ export const S10Epilogue: React.FC = () => {
               { label: "You Earned", value: `${formatNumber(balance)} $STD` },
               {
                 label: "Run Choice",
-                value: runChoice === "STAY" ? "STAYED" : runChoice === "WITHDRAW" ? "WITHDREW" : "ACTIVE",
+                value:
+                  runChoice === "STAY"
+                    ? "STAYED"
+                    : runChoice === "WITHDRAW"
+                    ? "WITHDREW"
+                    : "ACTIVE",
               },
               {
                 label: runChoice === "STAY" ? "Runners Paid You" : "Exit Toll Paid",
@@ -208,7 +254,7 @@ export const S10Epilogue: React.FC = () => {
               },
             ]}
           />
-        </div>
+        </motion.div>
 
         {/* Export Button */}
         <div className="mb-12">
@@ -216,14 +262,14 @@ export const S10Epilogue: React.FC = () => {
             onClick={handleExportShareCard}
             disabled={exporting}
             aria-label={content.button}
-            className="px-8 py-3.5 bg-gold hover:bg-gold-bright text-paper rounded font-mono text-xs sm:text-sm font-bold tracking-widest uppercase shadow-md hover:shadow-lg transition-transform active:scale-95 focus-visible:ring-2 focus-visible:ring-gold"
+            className="px-8 py-3.5 bg-gold hover:bg-gold-bright text-paper rounded font-mono text-xs sm:text-sm font-bold tracking-widest uppercase shadow-lg hover:shadow-xl transition-transform active:scale-95 cursor-pointer focus-visible:ring-2 focus-visible:ring-gold"
           >
             {exporting ? "GENERATING CARD..." : `📥 ${content.button}`}
           </button>
         </div>
 
         {/* Three Quiet Links */}
-        <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-8 mb-12 font-mono text-xs text-ink uppercase tracking-wider">
+        <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-8 mb-12 font-mono text-xs text-ink uppercase tracking-wider font-semibold">
           {content.links.map((link) => (
             <a
               key={link.label}

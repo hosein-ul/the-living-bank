@@ -10,6 +10,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@types/canvas-confetti": "^1.9.0",
+    "canvas-confetti": "^1.9.4",
     "framer-motion": "^12.4.7",
     "lenis": "^1.1.20",
     "next": "15.1.7",

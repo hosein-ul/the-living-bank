@@ -1,9 +1,11 @@
 "use client";
 
 import React, { useRef } from "react";
+import { motion, useScroll } from "framer-motion";
 import { useSim } from "../sim/SimProvider";
 import { formatNumber } from "../sim/formatters";
 import { CHAPTERS_CONTENT } from "@/content/chapters";
+import { EASINGS } from "@/lib/easings";
 
 export const S9Ledger: React.FC = () => {
   const content = CHAPTERS_CONTENT.s9;
@@ -12,8 +14,14 @@ export const S9Ledger: React.FC = () => {
     burned: s.burned,
   }));
 
+  const containerRef = useRef<HTMLElement>(null);
   const hardCap = 1_000_000_000;
   const currentMax = hardCap - burned;
+
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start start", "end end"],
+  });
 
   const recapFrames = [
     {
@@ -46,73 +54,94 @@ export const S9Ledger: React.FC = () => {
   return (
     <section
       id="chapter-9"
-      className="relative min-h-screen py-24 px-6 sm:px-12 lg:px-16 border-t border-ink/10 flex items-center justify-center bg-paper"
+      ref={containerRef}
+      className="relative min-h-[260vh] border-t border-ink/10 bg-paper"
     >
-      <div className="w-full max-w-7xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-12">
-        {/* Copy Column (~40% desktop) */}
-        <div className="w-full lg:w-[42%] flex flex-col justify-center">
-          <div className="mb-3">
-            <span className="font-mono text-xs uppercase tracking-widest text-gold font-semibold">
+      <div className="sticky top-0 h-screen w-full flex flex-col lg:flex-row items-center justify-between p-6 sm:p-12 lg:p-16 max-w-7xl mx-auto overflow-hidden">
+        {/* Copy Column (~42% desktop) */}
+        <div className="w-full lg:w-[42%] flex flex-col justify-center order-2 lg:order-1 mt-6 lg:mt-0 z-10">
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, ease: EASINGS.smooth }}
+            className="mb-3"
+          >
+            <span className="font-mono text-xs uppercase tracking-widest text-gold font-semibold flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-gold" />
               CHAPTER {content.numeral} · {content.title}
             </span>
-          </div>
+          </motion.div>
 
-          <p className="font-serif text-lg sm:text-xl text-ink leading-relaxed max-w-[34ch] mb-6">
+          <motion.p
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.1, ease: EASINGS.smooth }}
+            className="font-serif text-lg sm:text-xl text-ink leading-relaxed max-w-[34ch] mb-6"
+          >
             {content.copy}
-          </p>
+          </motion.p>
 
-          <div className="border-l-2 border-gold pl-4 py-1">
+          <motion.div
+            initial={{ opacity: 0, x: -12 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.2, ease: EASINGS.smooth }}
+            className="border-l-2 border-gold pl-4 py-1"
+          >
             <p className="font-serif italic text-lg sm:text-xl text-gold font-medium">
               &ldquo;{content.takeaway}&rdquo;
             </p>
-          </div>
+          </motion.div>
         </div>
 
-        {/* Stage (~60% desktop): Real Scale Odometers & Slow-Mo Recap */}
-        <div className="w-full lg:w-[56%] flex flex-col items-center justify-center bg-paper-deep/50 p-6 sm:p-8 rounded border border-ink/15 shadow-sm">
+        {/* Stage (~56% desktop): Real Scale Odometers & Slow-Mo Recap */}
+        <div className="w-full lg:w-[56%] flex flex-col items-center justify-center bg-paper-deep/50 p-6 sm:p-8 rounded-lg border border-ink/15 shadow-[0_12px_32px_rgba(26,26,24,0.06)] order-1 lg:order-2">
           {/* Sticky Odometer Pair */}
-          <div className="w-full p-5 bg-paper rounded border border-ink/20 shadow-inner mb-6 space-y-4">
+          <div className="w-full p-6 bg-paper rounded-lg border border-ink/20 shadow-inner mb-6 space-y-4">
             {/* Circulating Supply */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-ink/10">
-              <span className="font-mono text-xs uppercase tracking-wider text-ink-60 font-semibold mb-1 sm:mb-0">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3.5 border-b border-ink/10">
+              <span className="font-mono text-xs uppercase tracking-wider text-ink-60 font-bold mb-1 sm:mb-0">
                 {content.labels.circulating}
               </span>
               <span className="font-mono text-2xl sm:text-3xl font-bold tabular-nums text-ink">
-                {formatNumber(sCirc)} <span className="text-xs text-gold">$STD</span>
+                {formatNumber(sCirc)} <span className="text-xs text-gold font-semibold">$STD</span>
               </span>
             </div>
 
             {/* Burned Forever */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-ink/10">
-              <span className="font-mono text-xs uppercase tracking-wider text-red font-semibold mb-1 sm:mb-0">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3.5 border-b border-ink/10">
+              <span className="font-mono text-xs uppercase tracking-wider text-red font-bold mb-1 sm:mb-0">
                 {content.labels.burned}
               </span>
               <span className="font-mono text-2xl sm:text-3xl font-bold tabular-nums text-red">
-                {formatNumber(burned)} <span className="text-xs text-red/80">$STD</span>
+                {formatNumber(burned)} <span className="text-xs text-red/80 font-semibold">$STD</span>
               </span>
             </div>
 
             {/* Hard Cap Ticking Down */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between text-ink-60 pt-1">
-              <span className="font-mono text-[10px] uppercase tracking-wider">
+              <span className="font-mono text-[10px] uppercase tracking-wider font-semibold">
                 HARD CAP 1,000,000,000 → NEVER RISES
               </span>
-              <span className="font-mono text-xs font-semibold tabular-nums text-ink">
+              <span className="font-mono text-xs font-bold tabular-nums text-ink">
                 Current Max: {formatNumber(currentMax)} $STD
               </span>
             </div>
           </div>
 
-          {/* 5 Recap Frames in Grayscale Paper Style */}
+          {/* 5 Recap Frames */}
           <div className="w-full space-y-2.5">
-            <span className="font-mono text-[10px] uppercase tracking-widest text-ink-60 block mb-1">
+            <span className="font-mono text-[10px] uppercase tracking-widest text-ink-60 block mb-1 font-semibold">
               Session Action Archive
             </span>
 
             {recapFrames.map((frame, idx) => (
-              <div
+              <motion.div
                 key={idx}
-                className="p-3 bg-paper rounded border border-ink/10 flex items-center justify-between hover:border-gold/40 transition-colors"
+                whileHover={{ scale: 1.01, borderColor: "#b08d2e" }}
+                className="p-3 bg-paper rounded-md border border-ink/10 flex items-center justify-between transition-colors shadow-sm"
               >
                 <div className="flex flex-col">
                   <span className="font-mono text-[10px] font-bold text-ink tracking-wider">
@@ -122,10 +151,10 @@ export const S9Ledger: React.FC = () => {
                     {frame.desc}
                   </span>
                 </div>
-                <span className="font-mono text-[9px] uppercase tracking-wider text-gold font-semibold text-right ml-2 shrink-0">
+                <span className="font-mono text-[9px] uppercase tracking-wider text-gold font-bold text-right ml-2 shrink-0">
                   {frame.metric}
                 </span>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>

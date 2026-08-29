@@ -26,26 +26,50 @@ export const Dial: React.FC<DialProps> = ({
   // 14-epoch strip chart SVG path
   const chartWidth = 280;
   const chartHeight = 60;
-  const history = flowHistory.length >= 14 ? flowHistory.slice(-14) : [...Array(14 - flowHistory.length).fill(0), ...flowHistory];
+  const history =
+    flowHistory.length >= 14
+      ? flowHistory.slice(-14)
+      : [...Array(14 - flowHistory.length).fill(0), ...flowHistory];
 
-  const points = history.map((val, idx) => {
-    const x = (idx / 13) * chartWidth;
-    // Map -1..1 to height (height - 5 to 5)
-    const y = chartHeight / 2 - (val * (chartHeight / 2 - 8));
-    return `${x},${y}`;
-  }).join(" ");
+  const points = history
+    .map((val, idx) => {
+      const x = (idx / 13) * chartWidth;
+      const y = chartHeight / 2 - val * (chartHeight / 2 - 8);
+      return `${x},${y}`;
+    })
+    .join(" ");
+
+  const areaPoints = `0,${chartHeight} ${points} ${chartWidth},${chartHeight}`;
 
   return (
-    <div className={`relative w-full max-w-[360px] flex flex-col items-center select-none ${className}`}>
+    <div className={`relative w-full max-w-[380px] flex flex-col items-center select-none ${className}`}>
       {/* 14-Epoch Strip Chart behind the dial */}
-      <div className="w-full mb-3 p-2 bg-paper rounded border border-ink/10">
-        <div className="flex justify-between items-center mb-1 font-mono text-[9px] text-ink-60 uppercase tracking-widest">
+      <div className="w-full mb-3 p-3 bg-paper rounded-lg border border-ink/15 shadow-sm">
+        <div className="flex justify-between items-center mb-1.5 font-mono text-[9.5px] text-ink-60 uppercase tracking-widest font-semibold">
           <span>Net Flow History (14 Epochs)</span>
-          <span className={isContraction ? "text-red font-semibold" : "text-green font-semibold"}>
-            {isContraction ? "Defensive" : "Active"}
+          <span className={isContraction ? "text-red font-bold" : "text-green font-bold"}>
+            {isContraction ? "CONTRACTION REGIME" : "EXPANSION REGIME"}
           </span>
         </div>
-        <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} className="w-full h-12 overflow-visible">
+        <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} className="w-full h-14 overflow-visible">
+          <defs>
+            <linearGradient id="chartAreaGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop
+                offset="0%"
+                stopColor={isContraction ? "#a33b2e" : "#b08d2e"}
+                stopOpacity="0.25"
+              />
+              <stop
+                offset="100%"
+                stopColor={isContraction ? "#a33b2e" : "#b08d2e"}
+                stopOpacity="0.0"
+              />
+            </linearGradient>
+          </defs>
+
+          {/* Area Fill */}
+          <polygon points={areaPoints} fill="url(#chartAreaGrad)" />
+
           {/* Zero baseline */}
           <line
             x1="0"
@@ -57,26 +81,31 @@ export const Dial: React.FC<DialProps> = ({
             strokeDasharray="3 3"
             opacity="0.3"
           />
+
           {/* Flow line */}
           <polyline
             points={points}
             fill="none"
             stroke={isContraction ? "#a33b2e" : "#1a1a18"}
-            strokeWidth="1.5"
+            strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
           />
-          {/* Dots */}
+
+          {/* Data Points */}
           {history.map((val, idx) => {
             const x = (idx / 13) * chartWidth;
-            const y = chartHeight / 2 - (val * (chartHeight / 2 - 8));
+            const y = chartHeight / 2 - val * (chartHeight / 2 - 8);
+            const isLast = idx === 13;
             return (
               <circle
                 key={idx}
                 cx={x}
                 cy={y}
-                r="2"
-                fill={idx === 13 ? "#b08d2e" : isContraction ? "#a33b2e" : "#1a1a18"}
+                r={isLast ? "3.5" : "2"}
+                fill={isLast ? "#c9a961" : isContraction ? "#a33b2e" : "#1a1a18"}
+                stroke={isLast ? "#8c6d1d" : "none"}
+                strokeWidth={isLast ? "1" : "0"}
               />
             );
           })}
@@ -84,20 +113,31 @@ export const Dial: React.FC<DialProps> = ({
       </div>
 
       {/* Monumental Brass Dial SVG */}
-      <div className="relative w-[280px] sm:w-[320px] h-[190px]">
-        <svg viewBox="0 0 320 200" className="w-full h-full drop-shadow-md">
+      <div className="relative w-[300px] sm:w-[340px] h-[200px]">
+        <svg viewBox="0 0 340 210" className="w-full h-full drop-shadow-[0_8px_24px_rgba(26,26,24,0.12)]">
+          {/* Outer Gear Teeth on Rim */}
+          {Array.from({ length: 25 }).map((_, i) => {
+            const deg = -130 + (i / 24) * 260;
+            const rad = (deg - 90) * (Math.PI / 180);
+            const x1 = 170 + Math.cos(rad) * 155;
+            const y1 = 190 + Math.sin(rad) * 155;
+            const x2 = 170 + Math.cos(rad) * 163;
+            const y2 = 190 + Math.sin(rad) * 163;
+            return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#b08d2e" strokeWidth="2.5" />;
+          })}
+
           {/* Outer Brass Housing Arch */}
           <path
-            d="M 20 180 A 140 140 0 0 1 300 180"
+            d="M 20 190 A 150 150 0 0 1 320 190"
             fill="none"
             stroke="#e9e4d8"
-            strokeWidth="32"
+            strokeWidth="36"
           />
           <path
-            d="M 20 180 A 140 140 0 0 1 300 180"
+            d="M 20 190 A 150 150 0 0 1 320 190"
             fill="none"
             stroke="#1a1a18"
-            strokeWidth="1"
+            strokeWidth="1.2"
           />
 
           {/* Ticks and Markings */}
@@ -110,16 +150,16 @@ export const Dial: React.FC<DialProps> = ({
             { m: "4.0×", deg: 120 },
           ].map((tick) => {
             const rad = (tick.deg - 90) * (Math.PI / 180);
-            const x1 = 160 + Math.cos(rad) * 126;
-            const y1 = 180 + Math.sin(rad) * 126;
-            const x2 = 160 + Math.cos(rad) * 148;
-            const y2 = 180 + Math.sin(rad) * 148;
-            const tx = 160 + Math.cos(rad) * 110;
-            const ty = 180 + Math.sin(rad) * 110;
+            const x1 = 170 + Math.cos(rad) * 132;
+            const y1 = 190 + Math.sin(rad) * 132;
+            const x2 = 170 + Math.cos(rad) * 158;
+            const y2 = 190 + Math.sin(rad) * 158;
+            const tx = 170 + Math.cos(rad) * 116;
+            const ty = 190 + Math.sin(rad) * 116;
 
             return (
               <g key={tick.deg}>
-                <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="#1a1a18" strokeWidth="1.5" />
+                <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="#1a1a18" strokeWidth="1.8" />
                 <text
                   x={tx}
                   y={ty}
@@ -127,8 +167,8 @@ export const Dial: React.FC<DialProps> = ({
                   dominantBaseline="middle"
                   fill="#1a1a18"
                   fontFamily="var(--font-ibm-plex-mono), monospace"
-                  fontSize="9"
-                  fontWeight="600"
+                  fontSize="9.5"
+                  fontWeight="700"
                 >
                   {tick.m}
                 </text>
@@ -137,9 +177,9 @@ export const Dial: React.FC<DialProps> = ({
           })}
 
           {/* Center Escapement Gear Hub */}
-          <circle cx="160" cy="180" r="26" fill="#c9a961" stroke="#b08d2e" strokeWidth="2" />
-          <circle cx="160" cy="180" r="14" fill="#1a1a18" />
-          <circle cx="160" cy="180" r="4" fill="#f4f1ea" />
+          <circle cx="170" cy="190" r="28" fill="#c9a961" stroke="#b08d2e" strokeWidth="2.5" />
+          <circle cx="170" cy="190" r="16" fill="#1a1a18" />
+          <circle cx="170" cy="190" r="5" fill="#f4f1ea" />
         </svg>
 
         {/* Needle Arm Layer */}
@@ -147,25 +187,25 @@ export const Dial: React.FC<DialProps> = ({
           animate={{ rotate: angle }}
           transition={
             isContraction
-              ? { duration: 0.24, ease: EASINGS.slam } // SLAM 240ms on cut
-              : { duration: 0.42, ease: EASINGS.smooth } // Ratchet up 420ms on raise
+              ? { duration: 0.24, ease: EASINGS.slam }
+              : { duration: 0.42, ease: EASINGS.smooth }
           }
           style={{ originX: "50%", originY: "100%" }}
-          className="absolute left-[calc(50%-2.5px)] top-[16px] w-[5px] h-[164px] pointer-events-none"
+          className="absolute left-[calc(50%-3px)] top-[18px] w-[6px] h-[172px] pointer-events-none"
         >
           {/* Brass pointer needle */}
-          <div className="w-full h-full bg-gradient-to-t from-gold via-gold-bright to-ink rounded-t shadow-md flex flex-col items-center">
-            <div className="w-2.5 h-2.5 rounded-full bg-gold border border-ink -mt-1" />
+          <div className="w-full h-full bg-gradient-to-t from-gold via-gold-bright to-ink rounded-t shadow-lg flex flex-col items-center">
+            <div className="w-3.5 h-3.5 rounded-full bg-gold border-2 border-ink -mt-1 shadow-sm" />
           </div>
         </motion.div>
       </div>
 
       {/* Numerical Multiplier HUD */}
-      <div className="mt-2 text-center font-mono">
-        <span className="text-xs uppercase tracking-widest text-ink-60 block">
+      <div className="mt-3 text-center font-mono">
+        <span className="text-xs uppercase tracking-widest text-ink-60 block font-medium">
           Issuance Multiplier
         </span>
-        <span className="text-2xl sm:text-3xl font-bold tabular-nums text-ink">
+        <span className="text-3xl sm:text-4xl font-bold tabular-nums text-ink">
           {multiplier.toFixed(2)}×
         </span>
       </div>

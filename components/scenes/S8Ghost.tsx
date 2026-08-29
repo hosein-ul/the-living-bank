@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import React, { useState, useRef } from "react";
+import { motion, AnimatePresence, useScroll } from "framer-motion";
+import confetti from "canvas-confetti";
 import { useSim } from "../sim/SimProvider";
 import { NPC, NPCState } from "../atoms/NPC";
 import { WaxSeal } from "../atoms/WaxSeal";
@@ -9,6 +10,7 @@ import { Receipt } from "../atoms/Receipt";
 import { formatNumber, formatRate } from "../sim/formatters";
 import { CHAPTERS_CONTENT } from "@/content/chapters";
 import { sound } from "@/lib/sound";
+import { EASINGS } from "@/lib/easings";
 
 export const S8Ghost: React.FC = () => {
   const content = CHAPTERS_CONTENT.s8;
@@ -22,63 +24,101 @@ export const S8Ghost: React.FC = () => {
     reportGhost: s.reportGhost,
   }));
 
+  const containerRef = useRef<HTMLElement>(null);
   const [hasReported, setHasReported] = useState<boolean>(false);
   const [bountyData, setBountyData] = useState<{ bounty: number; forfeited: number } | null>(null);
+
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start start", "end end"],
+  });
 
   const handleReport = () => {
     if (!hasReported) {
       setHasReported(true);
+      sound.playShatter();
       sound.playThud();
       const res = reportGhost();
       setBountyData(res);
+
+      if (typeof window !== "undefined") {
+        confetti({
+          particleCount: 35,
+          spread: 60,
+          origin: { y: 0.65 },
+          colors: ["#a33b2e", "#c9a961", "#b08d2e"],
+          disableForReducedMotion: true,
+        });
+      }
+
       setTimeout(() => {
-        sound.playChime();
-      }, 300);
+        sound.playCelebration();
+      }, 250);
     }
   };
 
   return (
     <section
       id="chapter-8"
-      className="relative min-h-screen py-24 px-6 sm:px-12 lg:px-16 border-t border-ink/10 flex items-center justify-center bg-[#eae5d8]"
+      ref={containerRef}
+      className="relative min-h-[260vh] border-t border-ink/10 bg-[#eae5d8]"
     >
-      <div className="w-full max-w-7xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-12">
-        {/* Copy Column (~40% desktop) */}
-        <div className="w-full lg:w-[42%] flex flex-col justify-center order-2 lg:order-1">
-          <div className="mb-3">
-            <span className="font-mono text-xs uppercase tracking-widest text-gold font-semibold">
+      <div className="sticky top-0 h-screen w-full flex flex-col lg:flex-row items-center justify-between p-6 sm:p-12 lg:p-16 max-w-7xl mx-auto overflow-hidden">
+        {/* Copy Column (~42% desktop) */}
+        <div className="w-full lg:w-[42%] flex flex-col justify-center order-2 lg:order-1 mt-6 lg:mt-0 z-10">
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, ease: EASINGS.smooth }}
+            className="mb-3"
+          >
+            <span className="font-mono text-xs uppercase tracking-widest text-gold font-semibold flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-gold" />
               CHAPTER {content.numeral} · {content.title}
             </span>
-          </div>
+          </motion.div>
 
-          <p className="font-serif text-lg sm:text-xl text-ink leading-relaxed max-w-[34ch] mb-6">
+          <motion.p
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.1, ease: EASINGS.smooth }}
+            className="font-serif text-lg sm:text-xl text-ink leading-relaxed max-w-[34ch] mb-6"
+          >
             {content.copy}
-          </p>
+          </motion.p>
 
-          <div className="border-l-2 border-gold pl-4 py-1">
+          <motion.div
+            initial={{ opacity: 0, x: -12 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.2, ease: EASINGS.smooth }}
+            className="border-l-2 border-gold pl-4 py-1"
+          >
             <p className="font-serif italic text-lg sm:text-xl text-gold font-medium">
               &ldquo;{content.takeaway}&rdquo;
             </p>
-          </div>
+          </motion.div>
         </div>
 
-        {/* Stage (~60% desktop): Dimmed Lobby with Ghost NPC */}
-        <div className="w-full lg:w-[56%] flex flex-col items-center justify-center bg-paper-deep/60 p-6 sm:p-8 rounded border border-ink/20 shadow-md order-1 lg:order-2">
+        {/* Stage (~56% desktop): Dimmed Lobby with Ghost NPC */}
+        <div className="w-full lg:w-[56%] flex flex-col items-center justify-center bg-paper-deep/70 p-6 sm:p-8 rounded-lg border border-ink/20 shadow-[0_12px_32px_rgba(26,26,24,0.08)] order-1 lg:order-2">
           {/* Wall Poster: DORMANT 30 DAYS — BOUNTY 2% */}
-          <div className="w-full flex items-center justify-between p-3.5 bg-paper rounded border border-gold/40 mb-6 shadow-sm">
+          <div className="w-full flex items-center justify-between p-3.5 bg-paper rounded-lg border border-gold/50 mb-5 shadow-sm">
             <div className="flex items-center gap-3">
-              <div className="w-2 h-2 rounded-full bg-red animate-pulse" />
+              <div className="w-2.5 h-2.5 rounded-full bg-red animate-pulse" />
               <span className="font-mono text-xs font-bold text-ink uppercase tracking-wider">
                 {content.poster}
               </span>
             </div>
-            <span className="font-mono text-[10px] text-gold font-semibold">
+            <span className="font-mono text-[10.5px] text-gold font-bold">
               REWARD: 1,000 $STD
             </span>
           </div>
 
           {/* NPCs in Dimmed Lobby: 1 Dormant Ghost Banker */}
-          <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 w-full mb-6">
+          <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 w-full mb-5">
             {Array.from({ length: 8 }).map((_, idx) => {
               const isGhost = idx === 3;
               const state: NPCState = isGhost
@@ -94,12 +134,12 @@ export const S8Ghost: React.FC = () => {
                     state={state}
                     deskLabel={isGhost ? "GHOST BANKER" : `Banker #${(idx + 1).toString().padStart(2, "0")}`}
                     hasMug={!isGhost}
-                    className={isGhost && !hasReported ? "ring-2 ring-red/40" : ""}
+                    className={isGhost && !hasReported ? "ring-2 ring-red/50 shadow-md" : ""}
                   />
 
                   {isGhost && hasReported && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-red/20 rounded">
-                      <WaxSeal text="CHARTER" subtext="REVOKED" size={54} cracked />
+                    <div className="absolute inset-0 flex items-center justify-center bg-red/20 rounded backdrop-blur-[1px]">
+                      <WaxSeal text="CHARTER" subtext="REVOKED" size={54} cracked animateStamp />
                     </div>
                   )}
                 </div>
@@ -108,10 +148,10 @@ export const S8Ghost: React.FC = () => {
           </div>
 
           {/* Dilution Yield Speedup Status */}
-          <div className="w-full p-3 bg-paper rounded border border-ink/10 flex items-center justify-between mb-6 font-mono text-xs">
-            <span className="text-ink-60 uppercase text-[10px]">Your Pro-Rata Yield Stream:</span>
-            <span className="font-bold text-gold">{formatRate(accrualRate)}</span>
-            <span className="text-[10px] text-ink-60 font-medium">
+          <div className="w-full p-3 bg-paper rounded-lg border border-ink/15 flex items-center justify-between mb-5 font-mono text-xs shadow-sm">
+            <span className="text-ink-60 uppercase text-[10px] font-semibold">Your Pro-Rata Yield Stream:</span>
+            <span className="font-bold text-gold text-sm">{formatRate(accrualRate)}</span>
+            <span className="text-[10px] text-green font-bold">
               {hasReported ? "▲ Dilution reduced (+20% faster)" : "Active"}
             </span>
           </div>
@@ -121,7 +161,7 @@ export const S8Ghost: React.FC = () => {
             <button
               onClick={handleReport}
               aria-label={content.button}
-              className="px-8 py-3.5 bg-red hover:bg-[#852f24] text-paper rounded font-mono text-xs sm:text-sm font-bold tracking-widest uppercase shadow-md hover:shadow-lg transition-transform active:scale-95 focus-visible:ring-2 focus-visible:ring-gold"
+              className="px-8 py-3.5 bg-red hover:bg-[#852f24] text-paper rounded font-mono text-xs sm:text-sm font-bold tracking-widest uppercase shadow-lg hover:shadow-xl transition-transform active:scale-95 cursor-pointer focus-visible:ring-2 focus-visible:ring-gold"
             >
               ⚖ {content.button}
             </button>
