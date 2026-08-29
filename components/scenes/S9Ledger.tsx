@@ -106,7 +106,7 @@ export const S9Ledger: React.FC = () => {
                 {content.labels.circulating}
               </span>
               <span className="font-mono text-2xl sm:text-3xl font-bold tabular-nums text-ink">
-                {formatNumber(sCirc)} <span className="text-xs text-gold font-semibold">$STD</span>
+                {formatNumber(sCirc)} <span className="text-xs text-gold font-semibold">$STANDARD</span>
               </span>
             </div>
 
@@ -116,7 +116,7 @@ export const S9Ledger: React.FC = () => {
                 {content.labels.burned}
               </span>
               <span className="font-mono text-2xl sm:text-3xl font-bold tabular-nums text-red">
-                {formatNumber(burned)} <span className="text-xs text-red/80 font-semibold">$STD</span>
+                {formatNumber(burned)} <span className="text-xs text-red/80 font-semibold">$STANDARD</span>
               </span>
             </div>
 
@@ -126,7 +126,7 @@ export const S9Ledger: React.FC = () => {
                 HARD CAP 1,000,000,000 → NEVER RISES
               </span>
               <span className="font-mono text-xs font-bold tabular-nums text-ink">
-                Current Max: {formatNumber(currentMax)} $STD
+                Current Max: {formatNumber(currentMax)} $STANDARD
               </span>
             </div>
           </div>

@@ -205,7 +205,7 @@ export const S6Vaults: React.FC = () => {
                 <div>
                   <div className="flex items-center justify-between my-2">
                     <span className="font-mono text-xs text-ink font-bold">
-                      Budget: {formatNumber(contractionVault)} $STD
+                      Budget: {formatNumber(contractionVault)} $STANDARD
                     </span>
                     <button
                       onClick={handlePuff}

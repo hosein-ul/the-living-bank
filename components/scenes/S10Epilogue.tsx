@@ -118,8 +118,8 @@ export const S10Epilogue: React.FC = () => {
     const rows = [
       { label: "EPOCHS LIVED", value: epoch.toString().padStart(3, "0") },
       { label: "BRANCHES MAINTAINED", value: `${branches}/10` },
-      { label: "YOU BURNED", value: `${formatNumber(visitorBurned)} $STD` },
-      { label: "YOU EARNED", value: `${formatNumber(balance)} $STD` },
+      { label: "YOU BURNED", value: `${formatNumber(visitorBurned)} $STANDARD` },
+      { label: "YOU EARNED", value: `${formatNumber(balance)} $STANDARD` },
       {
         label: "RUN OUTCOME",
         value:
@@ -133,9 +133,9 @@ export const S10Epilogue: React.FC = () => {
         label: "SETTLEMENT",
         value:
           runChoice === "STAY"
-            ? `+${formatNumber(runRewardOrFeePaid || 3214)} $STD`
+            ? `+${formatNumber(runRewardOrFeePaid || 3214)} $STANDARD`
             : runChoice === "WITHDRAW"
-            ? `-${formatNumber(runRewardOrFeePaid)} $STD`
+            ? `-${formatNumber(runRewardOrFeePaid)} $STANDARD`
             : "N/A",
       },
     ];
@@ -237,8 +237,8 @@ export const S10Epilogue: React.FC = () => {
             lines={[
               { label: "Epochs Lived", value: epoch.toString().padStart(3, "0") },
               { label: "Branches", value: `${branches}/10` },
-              { label: "You Burned", value: `${formatNumber(visitorBurned)} $STD` },
-              { label: "You Earned", value: `${formatNumber(balance)} $STD` },
+              { label: "You Burned", value: `${formatNumber(visitorBurned)} $STANDARD` },
+              { label: "You Earned", value: `${formatNumber(balance)} $STANDARD` },
               {
                 label: "Run Choice",
                 value:
@@ -250,7 +250,7 @@ export const S10Epilogue: React.FC = () => {
               },
               {
                 label: runChoice === "STAY" ? "Runners Paid You" : "Exit Toll Paid",
-                value: `${formatNumber(runRewardOrFeePaid || 3214)} $STD`,
+                value: `${formatNumber(runRewardOrFeePaid || 3214)} $STANDARD`,
               },
             ]}
           />

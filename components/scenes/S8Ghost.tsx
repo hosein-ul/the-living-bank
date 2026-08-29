@@ -113,7 +113,7 @@ export const S8Ghost: React.FC = () => {
               </span>
             </div>
             <span className="font-mono text-[10.5px] text-gold font-bold">
-              REWARD: 1,000 $STD
+              REWARD: 1,000 $STANDARD
             </span>
           </div>
 
@@ -169,11 +169,11 @@ export const S8Ghost: React.FC = () => {
             <Receipt
               title="DORMANCY RESOLUTION REPORT"
               lines={[
-                { label: "Bounty Collected", value: "1,000 $STD (2%)" },
-                { label: "Ghost Forfeit (70%)", value: "35,000 $STD" },
-                { label: "Forfeit Burn (50%)", value: "17,500 $STD" },
-                { label: "Stayers Payout (50%)", value: "17,500 $STD" },
-                { label: "Ghost Wallet Return", value: "15,000 $STD (30%)" },
+                { label: "Bounty Collected", value: "1,000 $STANDARD (2%)" },
+                { label: "Ghost Forfeit (70%)", value: "35,000 $STANDARD" },
+                { label: "Forfeit Burn (50%)", value: "17,500 $STANDARD" },
+                { label: "Stayers Payout (50%)", value: "17,500 $STANDARD" },
+                { label: "Ghost Wallet Return", value: "15,000 $STANDARD (30%)" },
                 { label: "Charter Status", value: "PERMANENTLY REVOKED" },
               ]}
               highlight="GHOST PURGED. YIELD DILUTION ELIMINATED."

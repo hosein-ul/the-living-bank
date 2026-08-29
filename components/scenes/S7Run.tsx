@@ -181,15 +181,15 @@ export const S7Run: React.FC = () => {
                 { label: "Your Decision", value: runChoice },
                 {
                   label: runChoice === "STAY" ? "Reward Collected" : "Resolution Fee Paid",
-                  value: `${formatNumber(runRewardOrFeePaid)} $STD`,
+                  value: `${formatNumber(runRewardOrFeePaid)} $STANDARD`,
                 },
                 { label: "Exit Toll Rate", value: formatPercent(fee) },
                 { label: "Burn Split", value: "50% Burned / 50% To Stayers" },
               ]}
               highlight={
                 runChoice === "STAY"
-                  ? `YOU STAYED. THE RUNNERS PAID YOU ${formatNumber(runRewardOrFeePaid)} $STD.`
-                  : `YOU PAID ${formatNumber(runRewardOrFeePaid)} $STD TO EXIT.`
+                  ? `YOU STAYED. THE RUNNERS PAID YOU ${formatNumber(runRewardOrFeePaid)} $STANDARD.`
+                  : `YOU PAID ${formatNumber(runRewardOrFeePaid)} $STANDARD TO EXIT.`
               }
             />
           )}

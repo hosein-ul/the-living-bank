@@ -40,7 +40,7 @@ export const BrassPlaque: React.FC = () => {
                 <span className="text-ink-60 uppercase text-[10px] tracking-wider">Balance</span>
                 <span className="font-mono text-ink font-medium">
                   {formatNumber(balance)}{" "}
-                  <span className="text-gold text-[10px]">$STD</span>{" "}
+                  <span className="text-gold text-[10px]">$STANDARD</span>{" "}
                   <span className="text-[10px] text-ink-60 font-normal">({formatRate(accrualRate)})</span>
                 </span>
               </div>
@@ -49,7 +49,7 @@ export const BrassPlaque: React.FC = () => {
                 <span className="text-ink-60 uppercase text-[10px] tracking-wider">Burned</span>
                 <span className="font-mono text-ink">
                   {formatNumber(visitorBurned)}{" "}
-                  <span className="text-gold text-[10px]">$STD</span>
+                  <span className="text-gold text-[10px]">$STANDARD</span>
                 </span>
               </div>
 

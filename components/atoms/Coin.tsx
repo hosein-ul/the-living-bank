@@ -130,7 +130,7 @@ export const Coin: React.FC<CoinProps> = ({
             strokeDasharray="4 2"
           />
 
-          {/* Currency Symbol $STD */}
+          {/* Currency Symbol $STANDARD */}
           <text
             x="50"
             y="54"
@@ -141,7 +141,7 @@ export const Coin: React.FC<CoinProps> = ({
             fontSize="19"
             letterSpacing="-0.5"
           >
-            $STD
+            $STANDARD
           </text>
 
           {/* Subtext */}

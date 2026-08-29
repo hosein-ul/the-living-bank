@@ -142,7 +142,7 @@ export const S4Furnace: React.FC = () => {
             <div className="flex justify-between items-center mb-1.5 font-mono text-[11px] sm:text-xs uppercase tracking-wider text-ink-60">
               <span className="font-semibold">24h Auction Rail</span>
               <span className="text-gold font-bold">
-                Price: {formatNumber(licensePrice)} $STD
+                Price: {formatNumber(licensePrice)} $STANDARD
               </span>
             </div>
 
@@ -216,7 +216,7 @@ export const S4Furnace: React.FC = () => {
                 ? "MAX CAPACITY (10/10 BRANCHES)"
                 : isDailyLimit
                 ? "DAILY LIMIT REACHED (3/3 TODAY)"
-                : `${content.button} (${formatNumber(licensePrice)} $STD)`}
+                : `${content.button} (${formatNumber(licensePrice)} $STANDARD)`}
             </button>
 
             <div className="flex justify-between w-full mt-2 font-mono text-[10px] text-ink-60">

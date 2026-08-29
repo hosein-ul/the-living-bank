@@ -112,8 +112,8 @@ Appears after the visitor claims their charter in Chapter III; never leaves. Fix
 ```
 CHARTER #0042
 BRANCHES   ▮▮▯▯▯▯▯▯▯▯   2/10
-BALANCE        41,203 $STD  (+2.3/s)
-BURNED               612 $STD
+BALANCE        41,203 $STANDARD  (+2.3/s)
+BURNED               612 $STANDARD
 ```
 - Branch pips fill as licenses are bought.
 - Balance STREAMs continuously (real accrual — money while you wait).
@@ -141,8 +141,8 @@ interface SimState {
   m: number                // issuance multiplier
   regime: Regime
   branches: number         // visitor's branch count (1..10)
-  balance: number          // visitor accrued $STD (display units)
-  visitorBurned: number    // total $STD the visitor burned via licenses + tolls paid
+  balance: number          // visitor accrued $STANDARD (display units)
+  visitorBurned: number    // total $STANDARD the visitor burned via licenses + tolls paid
   sCirc: number            // real scale: starts 100_000_000
   burned: number          // system-wide cumulative burns (real scale)
   gold: number             // expansion vault accumulation (normalized)
@@ -171,7 +171,7 @@ interface SimState {
 | Fee split | 70% active vault / 15% POL / 15% team | every epoch tick |
 | Buyback pacing | contraction vault spends in small rate-limited puffs: per "hour" tick spend ≈ `min(0.10·V, 0.002·R)` | UI shows one puff per 900ms max |
 | Resolution fee | exit pressure `P = W7d / max(D + W7d, 25%)`; `fee = quadratic(P)` mapped 0.5%→25%; locks at commit | half burns, half → stayers pot |
-| Dormancy bounty | 2% of dormant balance, cap 100,000 $STD | ghost forfeits 70% (half burn / half stayers), 30% returns to wallet |
+| Dormancy bounty | 2% of dormant balance, cap 100,000 $STANDARD | ghost forfeits 70% (half burn / half stayers), 30% returns to wallet |
 | Supply identity | `sCirc = 100M + mints − burned`; `sMax = 1B − burned` | real scale in Chapter IX |
 
 ### Tick model
@@ -246,7 +246,7 @@ Layout convention desktop: `[copy column ~40% left] [stage ~60% right]`. Mobile:
 ### S6 — CHAPTER VI · WHERE FEES GO
 - Stage: a switchboard. Fee coins rain on each epoch tick and pass through a 3-way splitter valve labeled `70 / 15 / 15`, routing to:
   - **GOLD VAULT** — gold bars stack up (expansion regime),
-  - **BUYBACK FURNACE** — a small robot puffs: takes a coin, buys $STD off a mini market shelf, EMBERs it — rate-limited to one puff per 900ms with caption `small steps only — never one blockable shot` (contraction regime),
+  - **BUYBACK FURNACE** — a small robot puffs: takes a coin, buys $STANDARD off a mini market shelf, EMBERs it — rate-limited to one puff per 900ms with caption `small steps only — never one blockable shot` (contraction regime),
   - **POL LAKE** — a liquidity level that only rises, captioned `can never be pulled`,
   - **TEAM** — a small purse (the steady 15%).
 - One brass switch `EXPANSION ⇄ CONTRACTION` flips the active-vault routing (synced with Chapter V regime).
@@ -257,7 +257,7 @@ Layout convention desktop: `[copy column ~40% left] [stage ~60% right]`. Mobile:
 - Stage: a bank lobby with 12 NPC bankers at desks (simple SVG figures, state machines, seeded behavior). A big red button: `BANK RUN`. The exit door has a toll gate whose arc redraws live as the quadratic fee curve. Each staying NPC has a "stayers mug".
 - Press RUN: agitation spreads; each NPC chooses RUN or STAY (seeded); runners sprint for the door; the toll climbs with aggregate exit volume (arc redraws, plaque shows `EXIT TOLL: 9.7%` rising); every runner pays: half EMBERs, half STREAMs into stayers' mugs.
 - The visitor chooses (two buttons): `WITHDRAW ALL — pay the toll` or `STAY — collect`. Stay → your mug fills from the runners. Withdraw → you pay the toll and watch the stayers collect.
-- A paper receipt summary appears: `YOU STAYED. THE RUNNERS PAID YOU 3,214 $STD.` — or the mirror line if the visitor ran.
+- A paper receipt summary appears: `YOU STAYED. THE RUNNERS PAID YOU 3,214 $STANDARD.` — or the mirror line if the visitor ran.
 - Copy: `Press it, and the lobby runs for the door. The toll climbs with the crowd — half of it burns, half lands in the mugs of everyone who stayed. You choose: run and pay, or stay and collect.`
 - **Takeaway: "The impatient fund the patient."**
 
@@ -281,7 +281,7 @@ Layout convention desktop: `[copy column ~40% left] [stage ~60% right]`. Mobile:
   ```
   THE LIVING BANK — SESSION RECEIPT
   EPOCHS LIVED 037 · BRANCHES 4/10
-  YOU BURNED 612 $STD · YOU EARNED 41,203
+  YOU BURNED 612 $STANDARD · YOU EARNED 41,203
   RUN: STAYED · RUNNERS PAID YOU 3,214
   ```
 - Button: `EXPORT SHARE CARD` → client-side canvas render → PNG download (1080×1080, paper/ink/gold only, session values from the store).

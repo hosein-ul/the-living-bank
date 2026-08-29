@@ -8,8 +8,8 @@ export interface SimState {
   m: number;                // issuance multiplier
   regime: Regime;
   branches: number;         // visitor's branch count (1..10)
-  balance: number;          // visitor accrued $STD (display units)
-  visitorBurned: number;    // total $STD the visitor burned via licenses + tolls paid
+  balance: number;          // visitor accrued $STANDARD (display units)
+  visitorBurned: number;    // total $STANDARD the visitor burned via licenses + tolls paid
   sCirc: number;            // real scale: starts 100_000_000
   burned: number;           // system-wide cumulative burns (real scale)
   gold: number;             // expansion vault accumulation (gold bars / score)
@@ -328,7 +328,7 @@ export class SimEngine {
   public accruePassive(deltaSec: number): void {
     if (!this.state.claimedCharter || this.state.branches <= 0) return;
     const totalBranches = this.state.totalNpcBranches + this.state.branches;
-    // Rate ~ 2.3 $STD / sec per branch at m=1
+    // Rate ~ 2.3 $STANDARD / sec per branch at m=1
     const baseRate = 2.3;
     const dilutionFactor = 400 / totalBranches;
     const ratePerSec = this.state.branches * baseRate * this.state.m * dilutionFactor;

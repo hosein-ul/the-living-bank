@@ -76,7 +76,7 @@ console.log("✓ Choose STAY passed");
 // 8. Report Ghost
 const ghostResult = engine.reportGhost();
 const sGhost = engine.getState();
-assert(ghostResult.bounty === 1000, "Bounty should be 1000 $STD (2% of 50,000)");
+assert(ghostResult.bounty === 1000, "Bounty should be 1000 $STANDARD (2% of 50,000)");
 assert(sGhost.ghostsReported === 1, "Ghosts reported count should be 1");
 assert(sGhost.totalNpcBranches < 400, "NPC branches should decrease removing ghost");
 console.log("✓ Report Ghost passed");
