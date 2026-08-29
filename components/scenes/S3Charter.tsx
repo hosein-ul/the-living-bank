@@ -20,6 +20,14 @@ export const S3Charter: React.FC = () => {
   const cardRef = useRef<HTMLDivElement>(null);
   const [stampAnimation, setStampAnimation] = useState(false);
 
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start start", "end end"],
+  });
+
+  const parchmentUnroll = useTransform(scrollYProgress, [0, 0.4], [0.85, 1]);
+  const copyY = useTransform(scrollYProgress, [0, 1], [0, 30]);
+
   // 3D Parallax Tilt
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
@@ -51,8 +59,8 @@ export const S3Charter: React.FC = () => {
       // Confetti burst with gold paper flakes
       if (typeof window !== "undefined") {
         confetti({
-          particleCount: 40,
-          spread: 70,
+          particleCount: 45,
+          spread: 75,
           origin: { y: 0.6 },
           colors: ["#b08d2e", "#c9a961", "#e9e4d8", "#8c6d1d"],
           disableForReducedMotion: true,
@@ -65,11 +73,14 @@ export const S3Charter: React.FC = () => {
     <section
       id="chapter-3"
       ref={containerRef}
-      className="relative min-h-[250vh] border-t border-ink/10 bg-paper"
+      className="relative min-h-[250vh] border-t border-ink/10 bg-paper select-none"
     >
       <div className="sticky top-0 h-screen w-full flex flex-col lg:flex-row items-center justify-between p-6 sm:p-12 lg:p-16 max-w-7xl mx-auto overflow-hidden">
         {/* Copy Column (~42% desktop) */}
-        <div className="w-full lg:w-[42%] flex flex-col justify-center order-2 lg:order-1 mt-6 lg:mt-0 z-10">
+        <motion.div
+          style={{ y: copyY }}
+          className="w-full lg:w-[42%] flex flex-col justify-center order-2 lg:order-1 mt-6 lg:mt-0 z-10"
+        >
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -78,7 +89,7 @@ export const S3Charter: React.FC = () => {
             className="mb-3"
           >
             <span className="font-mono text-xs uppercase tracking-widest text-gold font-semibold flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-gold" />
+              <span className="w-2 h-2 rounded-full bg-gold animate-live-dot" />
               CHAPTER {content.numeral} · {content.title}
             </span>
           </motion.div>
@@ -98,112 +109,111 @@ export const S3Charter: React.FC = () => {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.2, ease: EASINGS.smooth }}
-            className="border-l-2 border-gold pl-4 py-1"
+            className="border-l-2 border-gold pl-4 py-1 mb-8"
           >
-            <p className="font-serif italic text-lg sm:text-xl text-gold font-medium">
+            <span className="font-serif italic text-gold text-sm sm:text-base tracking-wide block">
               &ldquo;{content.takeaway}&rdquo;
-            </p>
+            </span>
           </motion.div>
-        </div>
 
-        {/* Stage (~56% desktop) */}
-        <div className="w-full lg:w-[56%] flex flex-col items-center justify-center order-1 lg:order-2">
-          <div className="relative flex flex-col items-center" style={{ perspective: 1000 }}>
-            {/* The Soulbound Charter Deed (Paper with 3D Tilt & Specular Lighting) */}
-            <motion.div
-              ref={cardRef}
-              style={{
-                rotateX,
-                rotateY,
-                transformStyle: "preserve-3d",
-              }}
-              onPointerMove={handlePointerMove}
-              onPointerLeave={handlePointerLeave}
-              initial={{ rotate: 3, scale: 0.95 }}
-              animate={
+          {/* Interactive Claim Button */}
+          <div>
+            <button
+              onClick={handleClaim}
+              disabled={claimedCharter}
+              aria-label={content.cta}
+              className={`group relative px-6 py-3.5 rounded font-mono text-xs sm:text-sm uppercase tracking-widest transition-all duration-300 flex items-center gap-3 cursor-pointer shadow-sm ${
                 claimedCharter
-                  ? { scale: 1 }
-                  : { rotate: [3, 2, 3.5, 3] }
-              }
-              transition={{ duration: 5, repeat: claimedCharter ? 0 : Infinity, ease: "easeInOut" }}
-              className={`relative w-[320px] sm:w-[380px] p-7 sm:p-9 bg-paper-deep border-2 rounded-lg shadow-[0_16px_40px_rgba(26,26,24,0.12)] text-center transition-all duration-500 cursor-pointer ${
-                claimedCharter
-                  ? "border-gold ring-4 ring-gold/20 shadow-[0_20px_50px_rgba(176,141,46,0.2)]"
-                  : "border-gold/50 hover:border-gold"
+                  ? "bg-paper-deep text-ink-60 border border-gold/40 cursor-default"
+                  : "bg-gold text-paper hover:bg-gold-bright hover:text-ink hover:shadow-md active:scale-95"
               }`}
             >
-              {/* Corner filigree accents */}
-              <div className="absolute top-2 left-2 w-4 h-4 border-t-2 border-l-2 border-gold/60" />
-              <div className="absolute top-2 right-2 w-4 h-4 border-t-2 border-r-2 border-gold/60" />
-              <div className="absolute bottom-2 left-2 w-4 h-4 border-b-2 border-l-2 border-gold/60" />
-              <div className="absolute bottom-2 right-2 w-4 h-4 border-b-2 border-r-2 border-gold/60" />
+              <span>{claimedCharter ? "CHARTER CLAIMED · SOULBOUND" : content.cta}</span>
+              {!claimedCharter && (
+                <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">
+                  →
+                </span>
+              )}
+            </button>
+            <span className="block font-mono text-[11px] text-ink-60 mt-2">
+              {content.subcaption}
+            </span>
+          </div>
+        </motion.div>
 
-              {/* Soulbound Crest & Header */}
-              <div className="flex justify-center mb-3">
-                <WaxSeal text="FOUNDING" subtext="CHARTER" size={72} animateStamp={stampAnimation} />
+        {/* 3D Charter Deed Card (~55% desktop) */}
+        <div className="w-full lg:w-[55%] h-[420px] sm:h-[500px] lg:h-[560px] relative order-1 lg:order-2 flex items-center justify-center p-4 perspective-1000">
+          <motion.div
+            ref={cardRef}
+            style={{
+              rotateX,
+              rotateY,
+              scale: parchmentUnroll,
+              transformStyle: "preserve-3d",
+            }}
+            onPointerMove={handlePointerMove}
+            onPointerLeave={handlePointerLeave}
+            className="relative w-full max-w-[420px] aspect-[1/1.38] bg-[#fbf9f4] border-2 border-gold/60 rounded-lg p-6 sm:p-8 flex flex-col justify-between shadow-xl transition-shadow duration-300"
+          >
+            {/* Watermark Deed Border */}
+            <div className="absolute inset-2 border border-dashed border-gold/30 rounded pointer-events-none" />
+
+            {/* Header */}
+            <div className="relative z-10 flex justify-between items-start border-b border-ink/10 pb-4">
+              <div>
+                <span className="font-mono text-[10px] uppercase tracking-widest text-ink-60 block">
+                  GENESIS SOULBOUND LICENSE
+                </span>
+                <h3 className="font-serif text-2xl sm:text-3xl font-bold tracking-tight text-ink mt-0.5">
+                  {content.deed}
+                </h3>
               </div>
+              <div className="text-right font-mono text-[10px] text-gold tracking-wider">
+                1 OF 1,000
+                <span className="block text-ink-60">FOUNDING</span>
+              </div>
+            </div>
 
-              <span className="font-mono text-[10px] uppercase tracking-[0.25em] text-ink-60 block mb-1">
-                SOVEREIGN LICENSE
-              </span>
-
-              <h3 className="font-serif text-2xl sm:text-3xl font-bold tracking-tight text-ink mb-2">
-                {content.deed}
-              </h3>
-
-              <div className="w-28 h-[1.5px] bg-gradient-to-r from-transparent via-gold to-transparent mx-auto my-3" />
-
-              <p className="font-serif text-xs text-ink-60 leading-relaxed max-w-[30ch] mx-auto italic mb-4">
-                Grants sole operational authority to maintain up to ten branches within the Standard Reserve. Soulbound & non-transferable.
+            {/* Body text & Calligraphy */}
+            <div className="relative z-10 my-4 space-y-3 font-serif text-xs sm:text-sm text-ink-60 leading-relaxed">
+              <p>
+                Be it known that the holder of this deed is authorized to operate a banking charter within the sovereign onchain central bank.
               </p>
-
-              {/* Dynamic Calligraphy Ink Signature */}
-              {claimedCharter && (
-                <div className="my-3 flex flex-col items-center">
-                  <svg className="w-44 h-8" viewBox="0 0 200 40">
-                    <motion.path
-                      d="M 10 25 Q 40 5 70 25 T 130 20 T 190 30"
-                      fill="none"
-                      stroke="#1a1a18"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      initial={{ pathLength: 0 }}
-                      animate={{ pathLength: 1 }}
-                      transition={{ duration: 1.2, ease: "easeInOut" }}
-                    />
-                  </svg>
-                  <span className="font-mono text-[8px] tracking-widest text-ink-40 uppercase">
-                    SEALED ON ETHEREUM
+              <div className="p-3 bg-paper-deep/60 rounded border border-ink/10 font-mono text-[11px] text-ink space-y-1">
+                <div className="flex justify-between">
+                  <span className="text-ink-60">STATUS:</span>
+                  <span className="text-green font-semibold">
+                    {claimedCharter ? "ACTIVE · SOULBOUND" : "UNCLAIMED"}
                   </span>
                 </div>
-              )}
-
-              <div className="font-mono text-[10px] uppercase text-gold font-bold tracking-wider pt-2 border-t border-ink/10 flex items-center justify-center gap-2">
-                <span className={`w-2 h-2 rounded-full ${claimedCharter ? "bg-green" : "bg-gold"}`} />
-                {claimedCharter ? "STATUS: ACTIVE BANKER" : "STATUS: UNCLAIMED"}
+                <div className="flex justify-between">
+                  <span className="text-ink-60">INITIAL BRANCHES:</span>
+                  <span className="font-semibold">1 / 10 MAX</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-ink-60">TRANSFERABLE:</span>
+                  <span className="text-red font-semibold">NO (GENESIS)</span>
+                </div>
               </div>
-            </motion.div>
-
-            {/* Action Button */}
-            <div className="mt-8 flex flex-col items-center">
-              <button
-                onClick={handleClaim}
-                disabled={claimedCharter}
-                aria-label={content.cta}
-                className={`px-8 py-3.5 rounded font-mono text-xs sm:text-sm font-bold tracking-wider uppercase transition-all duration-240 cursor-pointer ${
-                  claimedCharter
-                    ? "bg-paper-deep text-ink-60 border border-ink/20 cursor-default"
-                    : "bg-gold hover:bg-gold-bright text-paper shadow-lg hover:shadow-xl active:scale-95 focus-visible:ring-2 focus-visible:ring-gold"
-                }`}
-              >
-                {claimedCharter ? "CHARTER CLAIMED (#0042 ACTIVE)" : content.cta}
-              </button>
-
-              <span className="font-mono text-[11px] text-ink-60 mt-2">
-                {content.subcaption}
-              </span>
             </div>
-          </div>
+
+            {/* Footer Seal Stamp */}
+            <div className="relative z-10 flex justify-between items-end pt-3 border-t border-ink/10">
+              <div className="font-mono text-[9px] text-ink-60">
+                <span>AUTHORITY: STANDARD PROTOCOL</span>
+                <span className="block">HASH: 0x42...1848</span>
+              </div>
+
+              <div className="relative cursor-pointer" onClick={handleClaim}>
+                <WaxSeal
+                  text="STANDARD"
+                  subtext="CHARTER"
+                  size={76}
+                  animateStamp={stampAnimation || claimedCharter}
+                />
+              </div>
+            </div>
+          </motion.div>
         </div>
       </div>
     </section>

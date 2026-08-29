@@ -64,26 +64,120 @@ input:focus-visible {
   color: #b08d2e;
 }
 
-/* Shake animation for SLAM */
+/* Custom Animation Keyframes */
 @keyframes scene-shake {
   0% { transform: translate(0, 0); }
-  25% { transform: translate(-2px, 1px); }
-  50% { transform: translate(2px, -1px); }
-  75% { transform: translate(-1px, 2px); }
+  20% { transform: translate(-3px, 2px); }
+  40% { transform: translate(3px, -2px); }
+  60% { transform: translate(-2px, 1px); }
+  80% { transform: translate(2px, -1px); }
   100% { transform: translate(0, 0); }
 }
 
 .animate-shake {
-  animation: scene-shake 120ms ease-in-out;
+  animation: scene-shake 180ms ease-in-out;
 }
 
 @keyframes pulse-live {
   0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.4; transform: scale(0.85); }
+  50% { opacity: 0.35; transform: scale(0.8); }
 }
 
 .animate-live-dot {
   animation: pulse-live 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes gold-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-gold-shimmer {
+  background: linear-gradient(90deg, #b08d2e 0%, #e6c374 50%, #b08d2e 100%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gold-shimmer 3.5s ease-in-out infinite;
+}
+
+@keyframes float-gentle {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-8px) rotate(1deg); }
+}
+
+.animate-float {
+  animation: float-gentle 4s ease-in-out infinite;
+}
+
+@keyframes float-reverse {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(8px) rotate(-1deg); }
+}
+
+.animate-float-reverse {
+  animation: float-reverse 4.5s ease-in-out infinite;
+}
+
+@keyframes beam-flow-right {
+  0% { transform: translateX(-100%); opacity: 0; }
+  30% { opacity: 1; }
+  70% { opacity: 1; }
+  100% { transform: translateX(100%); opacity: 0; }
+}
+
+.animate-beam-right {
+  animation: beam-flow-right 1.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes beam-flow-left {
+  0% { transform: translateX(100%); opacity: 0; }
+  30% { opacity: 1; }
+  70% { opacity: 1; }
+  100% { transform: translateX(-100%); opacity: 0; }
+}
+
+.animate-beam-left {
+  animation: beam-flow-left 1.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes ember-rise {
+  0% { transform: translateY(0) scale(1) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(-50px) scale(0.2) rotate(45deg); opacity: 0; }
+}
+
+.animate-ember {
+  animation: ember-rise 0.8s ease-out forwards;
+}
+
+@keyframes heat-haze {
+  0%, 100% { transform: scale(1) translateY(0); filter: blur(0px); }
+  50% { transform: scale(1.02) translateY(-2px); filter: blur(0.5px); }
+}
+
+.animate-heat-haze {
+  animation: heat-haze 2.5s ease-in-out infinite;
+}
+
+@keyframes shockwave {
+  0% { transform: scale(0.8); opacity: 0.9; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+
+.animate-shockwave {
+  animation: shockwave 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Perspective utilities for 3D card tilts */
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.perspective-800 {
+  perspective: 800px;
+}
+
+.transform-style-3d {
+  transform-style: preserve-3d;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -96,7 +190,15 @@ input:focus-visible {
     scroll-behavior: auto !important;
   }
   .animate-shake,
-  .animate-live-dot {
+  .animate-live-dot,
+  .animate-gold-shimmer,
+  .animate-float,
+  .animate-float-reverse,
+  .animate-beam-right,
+  .animate-beam-left,
+  .animate-ember,
+  .animate-heat-haze,
+  .animate-shockwave {
     animation: none !important;
   }
 }
