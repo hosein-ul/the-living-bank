@@ -6,6 +6,8 @@ import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion"
 import { CHAPTERS_CONTENT } from "@/content/chapters";
 import { EASINGS } from "@/lib/easings";
 import { sound } from "@/lib/sound";
+import { KineticText } from "../motion/KineticText";
+import { MultiParallaxLayer } from "../motion/MultiParallaxLayer";
 
 const DynamicThreeIsland = dynamic(() => import("./ThreeIsland"), {
   ssr: false,
@@ -21,7 +23,7 @@ const DynamicThreeIsland = dynamic(() => import("./ThreeIsland"), {
 
 export const S1Island: React.FC = () => {
   const content = CHAPTERS_CONTENT.s1;
-  const containerRef = useRef<HTMLElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [activeIdx, setActiveIdx] = useState(0);
   const [scrollProgress, setScrollProgress] = useState(0);
 
@@ -54,29 +56,39 @@ export const S1Island: React.FC = () => {
   };
 
   return (
-    <section
-      id="chapter-1"
+    <div
       ref={containerRef}
-      className="relative min-h-[280vh] border-t border-ink/10 bg-paper"
+      className="relative min-h-[280vh] border-t border-ink/10 bg-paper overflow-hidden"
     >
+      {/* Layer 0: Background Topographic Contour Lines drifting [-35, -50] */}
+      <MultiParallaxLayer
+        progress={scrollYProgress}
+        vector={[-35, -50]}
+        className="absolute inset-0 pointer-events-none opacity-10 flex items-center justify-center"
+      >
+        <svg viewBox="0 0 900 900" className="w-[900px] h-[900px] max-w-none">
+          <ellipse cx="450" cy="450" rx="420" ry="380" fill="none" stroke="#b08d2e" strokeWidth="1" strokeDasharray="6 4" />
+          <ellipse cx="450" cy="450" rx="340" ry="300" fill="none" stroke="#b08d2e" strokeWidth="0.8" />
+          <ellipse cx="450" cy="450" rx="260" ry="220" fill="none" stroke="#b08d2e" strokeWidth="0.7" strokeDasharray="4 4" />
+          <ellipse cx="450" cy="450" rx="180" ry="150" fill="none" stroke="#b08d2e" strokeWidth="0.6" />
+        </svg>
+      </MultiParallaxLayer>
+
       <div className="sticky top-0 h-screen w-full flex flex-col lg:flex-row items-center justify-between p-6 sm:p-12 lg:p-16 max-w-7xl mx-auto overflow-hidden">
         {/* Copy Column (~42% desktop) */}
         <motion.div
           style={{ y: copyY }}
           className="w-full lg:w-[42%] z-10 flex flex-col justify-center order-2 lg:order-1 mt-4 lg:mt-0"
         >
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, ease: EASINGS.smooth }}
-            className="mb-3"
-          >
-            <span className="font-mono text-xs uppercase tracking-widest text-gold font-semibold flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-gold animate-live-dot" />
-              CHAPTER {content.numeral} · {content.title}
-            </span>
-          </motion.div>
+          <div className="mb-3 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-gold animate-live-dot" />
+            <KineticText
+              text={`CHAPTER ${content.numeral} · ${content.title}`}
+              as="span"
+              velocityReactive={true}
+              className="font-mono text-xs uppercase tracking-widest text-gold font-semibold"
+            />
+          </div>
 
           <motion.p
             initial={{ opacity: 0, y: 16 }}
@@ -123,18 +135,16 @@ export const S1Island: React.FC = () => {
             </AnimatePresence>
           </div>
 
-          {/* Gold Fraunces Italic Takeaway */}
-          <motion.div
-            initial={{ opacity: 0, x: -12 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.2, ease: EASINGS.smooth }}
-            className="border-l-2 border-gold pl-4 py-1"
-          >
-            <span className="font-serif italic text-gold text-sm sm:text-base tracking-wide block">
-              &ldquo;{content.takeaway}&rdquo;
-            </span>
-          </motion.div>
+          {/* Gold Fraunces Italic Takeaway with KineticText */}
+          <div className="border-l-2 border-gold pl-4 py-1">
+            <KineticText
+              text={`“${content.takeaway}”`}
+              as="p"
+              italicTakeaway={true}
+              delay={0.15}
+              className="font-serif italic text-gold text-sm sm:text-base tracking-wide"
+            />
+          </div>
 
           {/* Interactive Gloss navigation pills */}
           <div className="flex flex-wrap gap-1.5 mt-5">
@@ -166,6 +176,6 @@ export const S1Island: React.FC = () => {
           />
         </motion.div>
       </div>
-    </section>
+    </div>
   );
 };

@@ -29,7 +29,18 @@ export const ThreeIsland: React.FC<ThreeIslandProps> = ({ progress, activeIndex 
     const container = containerRef.current;
     if (!container) return;
 
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reducedMediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let isReducedMotion = reducedMediaQuery.matches;
+
+    const handleReducedChange = (e: MediaQueryListEvent) => {
+      isReducedMotion = e.matches;
+      if (isReducedMotion) {
+        mouseRef.current.x = 0;
+        mouseRef.current.y = 0;
+        islandGroup.position.y = 0;
+      }
+    };
+    reducedMediaQuery.addEventListener("change", handleReducedChange);
 
     // Setup Three.js Scene safely
     const scene = new THREE.Scene();
@@ -155,7 +166,7 @@ export const ThreeIsland: React.FC<ThreeIslandProps> = ({ progress, activeIndex 
 
     const structureMeshes: THREE.Group[] = [];
 
-    structureData.forEach((st, i) => {
+    structureData.forEach((st) => {
       const group = new THREE.Group();
       const x = Math.cos(st.angle) * st.r;
       const z = Math.sin(st.angle) * st.r;
@@ -208,7 +219,7 @@ export const ThreeIsland: React.FC<ThreeIslandProps> = ({ progress, activeIndex 
 
     // Pointer Parallax Listener (±5°)
     const handlePointerMove = (e: PointerEvent) => {
-      if (reducedMotion) return;
+      if (isReducedMotion) return;
       const rect = container.getBoundingClientRect();
       const nx = ((e.clientX - rect.left) / rect.width - 0.5) * 2;
       const ny = ((e.clientY - rect.top) / rect.height - 0.5) * 2;
@@ -224,7 +235,7 @@ export const ThreeIsland: React.FC<ThreeIslandProps> = ({ progress, activeIndex 
     let clock = new THREE.Clock();
 
     const render = () => {
-      const delta = clock.getDelta();
+      clock.getDelta();
       const elapsed = clock.getElapsedTime();
 
       const curProgress = progressRef.current;
@@ -234,14 +245,16 @@ export const ThreeIsland: React.FC<ThreeIslandProps> = ({ progress, activeIndex 
       const targetOrbit = curProgress * ((300 * Math.PI) / 180);
       currentOrbit += (targetOrbit - currentOrbit) * 0.08;
 
-      islandGroup.rotation.y = currentOrbit + (reducedMotion ? 0 : mouseRef.current.x);
-      islandGroup.rotation.x = reducedMotion ? 0 : mouseRef.current.y;
+      islandGroup.rotation.y = currentOrbit + (isReducedMotion ? 0 : mouseRef.current.x);
+      islandGroup.rotation.x = isReducedMotion ? 0 : mouseRef.current.y;
 
-      // Gentle floating bob on island
-      islandGroup.position.y = Math.sin(elapsed * 1.2) * 0.08;
+      // Gentle floating bob on island (suppressed on reduced motion)
+      islandGroup.position.y = isReducedMotion ? 0 : Math.sin(elapsed * 1.2) * 0.08;
 
       // Water subtle rotation & pulsing
-      waterMesh.rotation.y = elapsed * 0.05;
+      if (!isReducedMotion) {
+        waterMesh.rotation.y = elapsed * 0.05;
+      }
 
       // Pulse & Elevate active structure
       structureMeshes.forEach((group, idx) => {
@@ -253,18 +266,20 @@ export const ThreeIsland: React.FC<ThreeIslandProps> = ({ progress, activeIndex 
         group.position.y += (targetY - group.position.y) * 0.1;
       });
 
-      // Animate floating gold dust particles
-      const positions = particleGeo.attributes.position.array as Float32Array;
-      for (let i = 0; i < particleCount; i++) {
-        positions[i * 3 + 1] += particleVelocities[i].y;
-        positions[i * 3] += Math.sin(elapsed + i) * 0.002;
-        positions[i * 3 + 2] += Math.cos(elapsed + i) * 0.002;
+      // Animate floating gold dust particles (suppressed on reduced motion)
+      if (!isReducedMotion) {
+        const positions = particleGeo.attributes.position.array as Float32Array;
+        for (let i = 0; i < particleCount; i++) {
+          positions[i * 3 + 1] += particleVelocities[i].y;
+          positions[i * 3] += Math.sin(elapsed + i) * 0.002;
+          positions[i * 3 + 2] += Math.cos(elapsed + i) * 0.002;
 
-        if (positions[i * 3 + 1] > 8) {
-          positions[i * 3 + 1] = -1;
+          if (positions[i * 3 + 1] > 8) {
+            positions[i * 3 + 1] = -1;
+          }
         }
+        particleGeo.attributes.position.needsUpdate = true;
       }
-      particleGeo.attributes.position.needsUpdate = true;
 
       renderer.render(scene, camera);
       animId = requestAnimationFrame(render);
@@ -285,6 +300,7 @@ export const ThreeIsland: React.FC<ThreeIslandProps> = ({ progress, activeIndex 
     window.addEventListener("resize", handleResize);
 
     return () => {
+      reducedMediaQuery.removeEventListener("change", handleReducedChange);
       window.removeEventListener("pointermove", handlePointerMove);
       window.removeEventListener("resize", handleResize);
       cancelAnimationFrame(animId);

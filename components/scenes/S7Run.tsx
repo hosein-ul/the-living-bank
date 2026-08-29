@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import { motion, AnimatePresence, useScroll } from "framer-motion";
+import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 import { useSim } from "../sim/SimProvider";
 import { NPC, NPCState } from "../atoms/NPC";
 import { TollGate } from "../atoms/TollGate";
@@ -10,6 +10,9 @@ import { formatNumber, formatPercent } from "../sim/formatters";
 import { CHAPTERS_CONTENT } from "@/content/chapters";
 import { sound } from "@/lib/sound";
 import { EASINGS } from "@/lib/easings";
+import { KineticText } from "../motion/KineticText";
+import { ScrubbedConduit } from "../motion/ScrubbedConduit";
+import { MultiParallaxLayer } from "../motion/MultiParallaxLayer";
 
 export const S7Run: React.FC = () => {
   const content = CHAPTERS_CONTENT.s7;
@@ -29,7 +32,7 @@ export const S7Run: React.FC = () => {
     chooseRunAction: s.chooseRunAction,
   }));
 
-  const containerRef = useRef<HTMLElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [hasRunTriggered, setHasRunTriggered] = useState<boolean>(false);
   const runnerIndices = new Set([0, 2, 3, 5, 7, 9, 11]);
 
@@ -37,6 +40,8 @@ export const S7Run: React.FC = () => {
     target: containerRef,
     offset: ["start start", "end end"],
   });
+
+  const copyY = useTransform(scrollYProgress, [0, 1], [0, 30]);
 
   const handleTriggerRun = () => {
     setHasRunTriggered(true);
@@ -55,50 +60,107 @@ export const S7Run: React.FC = () => {
     }
   };
 
+  // 50/50 Fee Splitter conduit paths
+  const runnerInflowPath = "M 200 0 L 200 12";
+  const stayerMugBranch = "M 200 12 Q 200 22 80 28";
+  const burnCrucibleBranch = "M 200 12 Q 200 22 320 28";
+
   return (
-    <section
-      id="chapter-7"
+    <div
       ref={containerRef}
-      className="relative min-h-[260vh] border-t border-ink/10 bg-paper"
+      className="relative min-h-[260vh] border-t border-ink/10 bg-paper select-none overflow-hidden"
     >
+      {/* Layer 0: Background Panic Tension Linework drifting [-30, -50] */}
+      <MultiParallaxLayer
+        progress={scrollYProgress}
+        vector={[-30, -50]}
+        className="absolute inset-0 pointer-events-none opacity-10 flex items-center justify-center"
+      >
+        <svg viewBox="0 0 800 800" className="w-[800px] h-[800px] max-w-none">
+          <circle cx="400" cy="400" r="320" fill="none" stroke="#a33b2e" strokeWidth="1" strokeDasharray="6 6" />
+          <line x1="200" y1="200" x2="600" y2="600" stroke="#a33b2e" strokeWidth="0.8" />
+          <line x1="600" y1="200" x2="200" y2="600" stroke="#a33b2e" strokeWidth="0.8" />
+        </svg>
+      </MultiParallaxLayer>
+
       <div className="sticky top-0 h-screen w-full flex flex-col lg:flex-row items-center justify-between p-6 sm:p-12 lg:p-16 max-w-7xl mx-auto overflow-hidden">
         {/* Copy Column (~42% desktop) */}
-        <div className="w-full lg:w-[42%] flex flex-col justify-center order-2 lg:order-1 mt-6 lg:mt-0 z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, ease: EASINGS.smooth }}
-            className="mb-3"
-          >
-            <span className="font-mono text-xs uppercase tracking-widest text-gold font-semibold flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-gold" />
-              CHAPTER {content.numeral} · {content.title}
-            </span>
-          </motion.div>
+        <motion.div
+          style={{ y: copyY }}
+          className="w-full lg:w-[42%] flex flex-col justify-center order-2 lg:order-1 mt-6 lg:mt-0 z-10"
+        >
+          <div className="mb-3 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-gold animate-live-dot" />
+            <KineticText
+              text={`CHAPTER ${content.numeral} · ${content.title}`}
+              as="span"
+              velocityReactive={true}
+              className="font-mono text-xs uppercase tracking-widest text-gold font-semibold"
+            />
+          </div>
 
           <motion.p
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.1, ease: EASINGS.smooth }}
-            className="font-serif text-lg sm:text-xl text-ink leading-relaxed max-w-[34ch] mb-6"
+            className="font-serif text-lg sm:text-xl text-ink leading-relaxed max-w-[34ch] mb-4"
           >
             {content.copy}
           </motion.p>
 
-          <motion.div
-            initial={{ opacity: 0, x: -12 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.2, ease: EASINGS.smooth }}
-            className="border-l-2 border-gold pl-4 py-1"
-          >
-            <p className="font-serif italic text-lg sm:text-xl text-gold font-medium">
-              &ldquo;{content.takeaway}&rdquo;
-            </p>
-          </motion.div>
-        </div>
+          {/* 50/50 Fee Splitter Conduit Visualizer */}
+          <div className="p-3 bg-paper-deep rounded border border-ink/15 mb-4 shadow-sm">
+            <div className="flex justify-between items-center text-[9px] font-mono uppercase tracking-wider text-ink-60 mb-1">
+              <span className="text-gold font-bold">50% Stayers' Mugs</span>
+              <span>RUNNER'S EXIT TOLL</span>
+              <span className="text-red font-bold">50% Permanent Burn</span>
+            </div>
+
+            <div className="relative w-full h-8 overflow-visible">
+              <ScrubbedConduit
+                d={runnerInflowPath}
+                progress={scrollYProgress}
+                progressRange={[0, 0.4]}
+                strokeColor="#1a1a18"
+                strokeWidth={2.2}
+                viewBox="0 0 400 30"
+                className="absolute inset-0 w-full h-full"
+              />
+              <ScrubbedConduit
+                d={stayerMugBranch}
+                progress={scrollYProgress}
+                progressRange={[0.2, 0.85]}
+                strokeColor="#b08d2e"
+                strokeWidth={2.4}
+                viewBox="0 0 400 30"
+                className="absolute inset-0 w-full h-full"
+                animatedGlow={true}
+              />
+              <ScrubbedConduit
+                d={burnCrucibleBranch}
+                progress={scrollYProgress}
+                progressRange={[0.2, 0.85]}
+                strokeColor="#a33b2e"
+                strokeWidth={2.4}
+                viewBox="0 0 400 30"
+                className="absolute inset-0 w-full h-full"
+                animatedGlow={true}
+              />
+            </div>
+          </div>
+
+          {/* Gold Fraunces Italic Takeaway with KineticText */}
+          <div className="border-l-2 border-gold pl-4 py-1">
+            <KineticText
+              text={`“${content.takeaway}”`}
+              as="p"
+              italicTakeaway={true}
+              delay={0.15}
+              className="font-serif italic text-gold text-sm sm:text-base tracking-wide"
+            />
+          </div>
+        </motion.div>
 
         {/* Stage (~56% desktop): Bank Lobby */}
         <div className="w-full lg:w-[56%] flex flex-col items-center justify-center bg-paper-deep/50 p-6 sm:p-8 rounded-lg border border-ink/15 shadow-[0_12px_32px_rgba(26,26,24,0.06)] order-1 lg:order-2">
@@ -195,6 +257,6 @@ export const S7Run: React.FC = () => {
           )}
         </div>
       </div>
-    </section>
+    </div>
   );
 };

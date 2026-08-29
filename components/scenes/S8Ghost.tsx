@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import { motion, AnimatePresence, useScroll } from "framer-motion";
+import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 import confetti from "canvas-confetti";
 import { useSim } from "../sim/SimProvider";
 import { NPC, NPCState } from "../atoms/NPC";
@@ -11,6 +11,8 @@ import { formatNumber, formatRate } from "../sim/formatters";
 import { CHAPTERS_CONTENT } from "@/content/chapters";
 import { sound } from "@/lib/sound";
 import { EASINGS } from "@/lib/easings";
+import { KineticText } from "../motion/KineticText";
+import { MultiParallaxLayer } from "../motion/MultiParallaxLayer";
 
 export const S8Ghost: React.FC = () => {
   const content = CHAPTERS_CONTENT.s8;
@@ -24,7 +26,7 @@ export const S8Ghost: React.FC = () => {
     reportGhost: s.reportGhost,
   }));
 
-  const containerRef = useRef<HTMLElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [hasReported, setHasReported] = useState<boolean>(false);
   const [bountyData, setBountyData] = useState<{ bounty: number; forfeited: number } | null>(null);
 
@@ -32,6 +34,8 @@ export const S8Ghost: React.FC = () => {
     target: containerRef,
     offset: ["start start", "end end"],
   });
+
+  const copyY = useTransform(scrollYProgress, [0, 1], [0, 30]);
 
   const handleReport = () => {
     if (!hasReported) {
@@ -58,26 +62,37 @@ export const S8Ghost: React.FC = () => {
   };
 
   return (
-    <section
-      id="chapter-8"
+    <div
       ref={containerRef}
-      className="relative min-h-[260vh] border-t border-ink/10 bg-[#eae5d8]"
+      className="relative min-h-[260vh] border-t border-ink/10 bg-[#eae5d8] select-none overflow-hidden"
     >
+      {/* Layer 0: Background Dormant Hourglass Linework drifting [-30, -50] */}
+      <MultiParallaxLayer
+        progress={scrollYProgress}
+        vector={[-30, -50]}
+        className="absolute inset-0 pointer-events-none opacity-10 flex items-center justify-center"
+      >
+        <svg viewBox="0 0 800 800" className="w-[800px] h-[800px] max-w-none">
+          <polygon points="300,200 500,200 400,400 500,600 300,600 400,400" fill="none" stroke="#a33b2e" strokeWidth="1" strokeDasharray="6 6" />
+          <circle cx="400" cy="400" r="280" fill="none" stroke="#b08d2e" strokeWidth="0.8" />
+        </svg>
+      </MultiParallaxLayer>
+
       <div className="sticky top-0 h-screen w-full flex flex-col lg:flex-row items-center justify-between p-6 sm:p-12 lg:p-16 max-w-7xl mx-auto overflow-hidden">
         {/* Copy Column (~42% desktop) */}
-        <div className="w-full lg:w-[42%] flex flex-col justify-center order-2 lg:order-1 mt-6 lg:mt-0 z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, ease: EASINGS.smooth }}
-            className="mb-3"
-          >
-            <span className="font-mono text-xs uppercase tracking-widest text-gold font-semibold flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-gold" />
-              CHAPTER {content.numeral} · {content.title}
-            </span>
-          </motion.div>
+        <motion.div
+          style={{ y: copyY }}
+          className="w-full lg:w-[42%] flex flex-col justify-center order-2 lg:order-1 mt-6 lg:mt-0 z-10"
+        >
+          <div className="mb-3 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-gold animate-live-dot" />
+            <KineticText
+              text={`CHAPTER ${content.numeral} · ${content.title}`}
+              as="span"
+              velocityReactive={true}
+              className="font-mono text-xs uppercase tracking-widest text-gold font-semibold"
+            />
+          </div>
 
           <motion.p
             initial={{ opacity: 0, y: 16 }}
@@ -89,18 +104,17 @@ export const S8Ghost: React.FC = () => {
             {content.copy}
           </motion.p>
 
-          <motion.div
-            initial={{ opacity: 0, x: -12 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.2, ease: EASINGS.smooth }}
-            className="border-l-2 border-gold pl-4 py-1"
-          >
-            <p className="font-serif italic text-lg sm:text-xl text-gold font-medium">
-              &ldquo;{content.takeaway}&rdquo;
-            </p>
-          </motion.div>
-        </div>
+          {/* Gold Fraunces Italic Takeaway with KineticText */}
+          <div className="border-l-2 border-gold pl-4 py-1">
+            <KineticText
+              text={`“${content.takeaway}”`}
+              as="p"
+              italicTakeaway={true}
+              delay={0.15}
+              className="font-serif italic text-gold text-sm sm:text-base tracking-wide"
+            />
+          </div>
+        </motion.div>
 
         {/* Stage (~56% desktop): Dimmed Lobby with Ghost NPC */}
         <div className="w-full lg:w-[56%] flex flex-col items-center justify-center bg-paper-deep/70 p-6 sm:p-8 rounded-lg border border-ink/20 shadow-[0_12px_32px_rgba(26,26,24,0.08)] order-1 lg:order-2">
@@ -181,6 +195,6 @@ export const S8Ghost: React.FC = () => {
           )}
         </div>
       </div>
-    </section>
+    </div>
   );
 };

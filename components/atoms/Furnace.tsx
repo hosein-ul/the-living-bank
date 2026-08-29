@@ -24,16 +24,23 @@ export const Furnace: React.FC<FurnaceProps> = ({ burnTrigger = 0, className = "
   const particlesRef = useRef<Particle[]>([]);
   const lastBurnRef = useRef<number>(0);
 
-  // Trigger burst of embers on burn event
+  // Trigger burst of embers on burn event (4 bursts of 7 = 28 particles)
   useEffect(() => {
     if (burnTrigger > 0 && burnTrigger !== lastBurnRef.current) {
       lastBurnRef.current = burnTrigger;
       const canvas = canvasRef.current;
       if (!canvas) return;
-      const centerX = canvas.width / 2;
-      const centerY = canvas.height * 0.62;
 
-      // Intense 7-particle bursts
+      const isReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      if (isReduced) return;
+
+      const rect = canvas.getBoundingClientRect();
+      const width = rect.width || canvas.parentElement?.clientWidth || 360;
+      const height = rect.height || canvas.parentElement?.clientHeight || 260;
+      const centerX = width / 2;
+      const centerY = height * 0.62;
+
+      // Intense 28-particle bursts (4 bursts of 7 particles)
       for (let burst = 0; burst < 4; burst++) {
         for (let i = 0; i < 7; i++) {
           const angle = Math.PI * 1.05 + Math.random() * Math.PI * 0.9;
@@ -46,7 +53,7 @@ export const Furnace: React.FC<FurnaceProps> = ({ burnTrigger = 0, className = "
             size: 2.5 + Math.random() * 4,
             opacity: 1.0,
             life: 0,
-            maxLife: 0.7,
+            maxLife: 0.75,
             color: Math.random() > 0.35 ? "#c9a961" : "#b08d2e",
           });
         }
@@ -60,36 +67,39 @@ export const Furnace: React.FC<FurnaceProps> = ({ burnTrigger = 0, className = "
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    let animId: number;
-    const width = (canvas.width = canvas.parentElement?.clientWidth || 360);
-    const height = (canvas.height = canvas.parentElement?.clientHeight || 260);
-    const centerX = width / 2;
-    const centerY = height * 0.66;
+    const reducedMediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let isReducedMotion = reducedMediaQuery.matches;
 
-    let lastTime = performance.now();
-
-    const loop = (now: number) => {
-      const delta = Math.min((now - lastTime) / 1000, 0.1);
-      lastTime = now;
-
-      ctx.clearRect(0, 0, width, height);
-
-      // Ambient idle glow embers
-      if (Math.random() < 0.4) {
-        particlesRef.current.push({
-          x: centerX + (Math.random() - 0.5) * 36,
-          y: centerY + (Math.random() - 0.5) * 12,
-          vx: (Math.random() - 0.5) * 20,
-          vy: -20 - Math.random() * 35,
-          size: 1.8 + Math.random() * 2.2,
-          opacity: 0.85,
-          life: 0,
-          maxLife: 0.85,
-          color: Math.random() > 0.4 ? "#b08d2e" : "#c9a961",
-        });
+    const handleReducedChange = (e: MediaQueryListEvent) => {
+      isReducedMotion = e.matches;
+      if (isReducedMotion) {
+        drawStatic();
       }
+    };
+    reducedMediaQuery.addEventListener("change", handleReducedChange);
 
-      // Draw dynamic fire flame tongue in center chamber
+    let animId: number | null = null;
+    let isVisible = true;
+    let width = 0;
+    let height = 0;
+    let centerX = 0;
+    let centerY = 0;
+
+    const updateDimensions = () => {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const rect = canvas.getBoundingClientRect();
+      width = rect.width || canvas.parentElement?.clientWidth || 360;
+      height = rect.height || canvas.parentElement?.clientHeight || 260;
+      centerX = width / 2;
+      centerY = height * 0.66;
+      canvas.width = Math.round(width * dpr);
+      canvas.height = Math.round(height * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+
+    updateDimensions();
+
+    const drawFlame = (now: number) => {
       const flameTime = now * 0.005;
       ctx.save();
       ctx.beginPath();
@@ -115,6 +125,53 @@ export const Furnace: React.FC<FurnaceProps> = ({ burnTrigger = 0, className = "
       ctx.globalAlpha = 0.75;
       ctx.fill();
       ctx.restore();
+    };
+
+    const drawStatic = () => {
+      ctx.clearRect(0, 0, width, height);
+      // Steady calm flame glow
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(centerX, centerY - 16, 28, 0, Math.PI * 2);
+      const grad = ctx.createRadialGradient(centerX, centerY - 16, 4, centerX, centerY - 16, 28);
+      grad.addColorStop(0, "#c9a961");
+      grad.addColorStop(0.6, "#b08d2e");
+      grad.addColorStop(1, "rgba(244,241,234,0)");
+      ctx.fillStyle = grad;
+      ctx.globalAlpha = 0.6;
+      ctx.fill();
+      ctx.restore();
+    };
+
+    let lastTime = performance.now();
+
+    const loop = (now: number) => {
+      if (!isVisible || isReducedMotion) {
+        animId = null;
+        return;
+      }
+
+      const delta = Math.min((now - lastTime) / 1000, 0.1);
+      lastTime = now;
+
+      ctx.clearRect(0, 0, width, height);
+
+      // Ambient idle glow embers
+      if (Math.random() < 0.4) {
+        particlesRef.current.push({
+          x: centerX + (Math.random() - 0.5) * 36,
+          y: centerY + (Math.random() - 0.5) * 12,
+          vx: (Math.random() - 0.5) * 20,
+          vy: -20 - Math.random() * 35,
+          size: 1.8 + Math.random() * 2.2,
+          opacity: 0.85,
+          life: 0,
+          maxLife: 0.85,
+          color: Math.random() > 0.4 ? "#b08d2e" : "#c9a961",
+        });
+      }
+
+      drawFlame(now);
 
       // Update & Draw Embers
       for (let i = particlesRef.current.length - 1; i >= 0; i--) {
@@ -142,10 +199,40 @@ export const Furnace: React.FC<FurnaceProps> = ({ burnTrigger = 0, className = "
       animId = requestAnimationFrame(loop);
     };
 
-    animId = requestAnimationFrame(loop);
+    if (isReducedMotion) {
+      drawStatic();
+    } else if (isVisible) {
+      lastTime = performance.now();
+      animId = requestAnimationFrame(loop);
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        isVisible = entry.isIntersecting;
+        if (isVisible && !isReducedMotion && animId === null) {
+          lastTime = performance.now();
+          animId = requestAnimationFrame(loop);
+        }
+      },
+      { threshold: 0.05 }
+    );
+    observer.observe(canvas);
+
+    const handleResize = () => {
+      updateDimensions();
+      if (isReducedMotion) {
+        drawStatic();
+      }
+    };
+    window.addEventListener("resize", handleResize, { passive: true });
 
     return () => {
-      cancelAnimationFrame(animId);
+      observer.disconnect();
+      reducedMediaQuery.removeEventListener("change", handleReducedChange);
+      window.removeEventListener("resize", handleResize);
+      if (animId !== null) {
+        cancelAnimationFrame(animId);
+      }
     };
   }, []);
 

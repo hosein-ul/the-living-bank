@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 import confetti from "canvas-confetti";
 import { useSim } from "../sim/SimProvider";
@@ -10,6 +10,7 @@ import { formatNumber } from "../sim/formatters";
 import { CHAPTERS_CONTENT } from "@/content/chapters";
 import { sound } from "@/lib/sound";
 import { EASINGS } from "@/lib/easings";
+import { KineticText } from "../motion/KineticText";
 
 export const S10Epilogue: React.FC = () => {
   const content = CHAPTERS_CONTENT.s10;
@@ -32,7 +33,7 @@ export const S10Epilogue: React.FC = () => {
   const [exporting, setExporting] = useState<boolean>(false);
 
   // Client-side HTML5 Canvas 1080x1080 PNG Share Card Exporter
-  const handleExportShareCard = () => {
+  const handleExportShareCard = async () => {
     setExporting(true);
     sound.playThud();
     sound.playCelebration();
@@ -45,6 +46,14 @@ export const S10Epilogue: React.FC = () => {
         colors: ["#b08d2e", "#c9a961", "#e9e4d8", "#8c6d1d"],
         disableForReducedMotion: true,
       });
+    }
+
+    if (typeof document !== "undefined" && document.fonts) {
+      try {
+        await document.fonts.ready;
+      } catch {
+        // Fallback gracefully to system fonts
+      }
     }
 
     const canvas = document.createElement("canvas");
@@ -76,45 +85,54 @@ export const S10Epilogue: React.FC = () => {
 
     // Header Eyebrow & Title
     ctx.fillStyle = "rgba(26, 26, 24, 0.6)";
-    ctx.font = "600 20px monospace";
+    ctx.font = '600 18px "IBM Plex Mono", monospace';
     ctx.textAlign = "center";
-    ctx.fillText("AN INTERACTIVE EXPLANATION", 540, 160);
+    ctx.fillText("AN INTERACTIVE EXPLANATION", 540, 148);
 
     ctx.fillStyle = "#1a1a18";
-    ctx.font = "bold 56px serif";
-    ctx.fillText("THE LIVING BANK", 540, 230);
+    ctx.font = 'bold 52px "Fraunces", Georgia, serif';
+    ctx.fillText("THE LIVING BANK", 540, 212);
 
-    ctx.font = "italic 24px serif";
+    ctx.font = 'italic 24px "Fraunces", Georgia, serif';
     ctx.fillStyle = "#b08d2e";
-    ctx.fillText("Standard Reserve Protocol", 540, 275);
+    ctx.fillText("Standard Reserve Protocol ($STANDARD)", 540, 258);
 
     // Divider Line
     ctx.strokeStyle = "rgba(26, 26, 24, 0.2)";
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(160, 310);
-    ctx.lineTo(920, 310);
+    ctx.moveTo(140, 290);
+    ctx.lineTo(940, 290);
     ctx.stroke();
 
     // Receipt Box
-    ctx.fillStyle = "#f4f1ea";
-    ctx.fillRect(140, 350, 800, 480);
+    ctx.fillStyle = "#fbf9f4";
+    ctx.fillRect(140, 325, 800, 495);
     ctx.strokeStyle = "#1a1a18";
     ctx.lineWidth = 1.5;
     ctx.setLineDash([8, 6]);
-    ctx.strokeRect(140, 350, 800, 480);
+    ctx.strokeRect(140, 325, 800, 495);
     ctx.setLineDash([]);
 
-    // Receipt Content
-    ctx.fillStyle = "#1a1a18";
-    ctx.font = "bold 26px monospace";
+    // Receipt Content Header
+    ctx.fillStyle = "rgba(26, 26, 24, 0.6)";
+    ctx.font = '600 13px "IBM Plex Mono", monospace';
     ctx.textAlign = "center";
-    ctx.fillText("OFFICIAL SESSION RECEIPT", 540, 410);
+    ctx.fillText("OFFICIAL SETTLEMENT", 540, 360);
+
+    ctx.fillStyle = "#1a1a18";
+    ctx.font = 'bold 24px "Fraunces", Georgia, serif';
+    ctx.fillText("THE LIVING BANK — SESSION RECEIPT", 540, 392);
+
+    // Subtle divider inside receipt
+    ctx.strokeStyle = "rgba(26, 26, 24, 0.15)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(180, 415);
+    ctx.lineTo(900, 415);
+    ctx.stroke();
 
     // Metrics Rows
-    ctx.font = "24px monospace";
-    ctx.textAlign = "left";
-
     const rows = [
       { label: "EPOCHS LIVED", value: epoch.toString().padStart(3, "0") },
       { label: "BRANCHES MAINTAINED", value: `${branches}/10` },
@@ -141,18 +159,20 @@ export const S10Epilogue: React.FC = () => {
     ];
 
     rows.forEach((r, idx) => {
-      const y = 470 + idx * 55;
+      const y = 460 + idx * 52;
       ctx.fillStyle = "rgba(26, 26, 24, 0.6)";
+      ctx.font = '500 20px "IBM Plex Mono", monospace';
+      ctx.textAlign = "left";
       ctx.fillText(r.label, 180, y);
       ctx.fillStyle = "#1a1a18";
-      ctx.font = "bold 24px monospace";
-      ctx.fillText(r.value, 600, y);
-      ctx.font = "24px monospace";
+      ctx.font = 'bold 21px "IBM Plex Mono", monospace';
+      ctx.textAlign = "right";
+      ctx.fillText(r.value, 900, y);
     });
 
-    // Gold Seal Stamp bottom right in canvas
+    // Gold Wax Seal Stamp bottom right in canvas receipt
     ctx.beginPath();
-    ctx.arc(800, 710, 55, 0, Math.PI * 2);
+    ctx.arc(810, 715, 52, 0, Math.PI * 2);
     ctx.fillStyle = "#b08d2e";
     ctx.fill();
     ctx.strokeStyle = "#8e6e22";
@@ -160,19 +180,30 @@ export const S10Epilogue: React.FC = () => {
     ctx.stroke();
 
     ctx.fillStyle = "#f4f1ea";
-    ctx.font = "bold 13px serif";
+    ctx.font = 'bold 12px "Fraunces", Georgia, serif';
     ctx.textAlign = "center";
-    ctx.fillText("EXPERIENCED", 800, 705);
-    ctx.font = "10px monospace";
-    ctx.fillText("RESERVE", 800, 722);
+    ctx.fillText("EXPERIENCED", 810, 710);
+    ctx.font = '10px "IBM Plex Mono", monospace';
+    ctx.fillText("RESERVE", 810, 727);
 
     // Footer text
-    ctx.fillStyle = "rgba(26, 26, 24, 0.6)";
-    ctx.font = "16px monospace";
+    ctx.fillStyle = "rgba(26, 26, 24, 0.75)";
+    ctx.font = '600 16px "IBM Plex Mono", monospace';
     ctx.textAlign = "center";
-    ctx.fillText("standardreserve.xyz · immutable onchain central bank", 540, 890);
-    ctx.font = "italic 15px serif";
-    ctx.fillText("Supply has one direction: down.", 540, 930);
+    ctx.fillText("standardreserve.xyz · immutable onchain central bank", 540, 870);
+
+    ctx.font = 'italic 18px "Fraunces", Georgia, serif';
+    ctx.fillStyle = "#b08d2e";
+    ctx.fillText("“Supply has one direction: down.”", 540, 905);
+
+    // Verbatim Disclaimer on Share Card
+    ctx.fillStyle = "rgba(26, 26, 24, 0.6)";
+    ctx.font = '13px "IBM Plex Mono", monospace';
+    ctx.fillText(
+      "A fan-made interactive explanation. Not affiliated. Nothing here is financial advice.",
+      540,
+      948
+    );
 
     const dataUrl = canvas.toDataURL("image/png");
     const a = document.createElement("a");
@@ -186,9 +217,8 @@ export const S10Epilogue: React.FC = () => {
   };
 
   return (
-    <section
-      id="chapter-10"
-      className="relative min-h-screen py-24 px-6 sm:px-12 lg:px-16 border-t border-ink/10 flex flex-col items-center justify-center bg-paper text-center"
+    <div
+      className="relative min-h-screen py-24 px-6 sm:px-12 lg:px-16 border-t border-ink/10 flex flex-col items-center justify-center bg-paper text-center overflow-hidden"
     >
       <div className="w-full max-w-4xl mx-auto flex flex-col items-center">
         {/* Seal Stamp */}
@@ -202,16 +232,13 @@ export const S10Epilogue: React.FC = () => {
           <WaxSeal text="EXPERIENCED" subtext="RESERVE" size={96} animateStamp />
         </motion.div>
 
-        {/* Title */}
-        <motion.h2
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5, ease: EASINGS.smooth }}
-          className="font-serif text-3xl sm:text-5xl font-semibold tracking-tight text-ink mb-4"
-        >
-          {content.title}
-        </motion.h2>
+        {/* Title with Word-Masked Kinetic Typography */}
+        <KineticText
+          text={content.title}
+          as="h2"
+          velocityReactive={true}
+          className="font-serif text-3xl sm:text-5xl font-semibold tracking-tight text-ink mb-4 justify-center"
+        />
 
         {/* Copy (Verbatim) */}
         <motion.p
@@ -288,6 +315,6 @@ export const S10Epilogue: React.FC = () => {
           {content.disclaimer}
         </p>
       </div>
-    </section>
+    </div>
   );
 };

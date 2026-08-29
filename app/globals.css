@@ -21,7 +21,6 @@
 html {
   background-color: #f4f1ea;
   color: #1a1a18;
-  scroll-behavior: smooth;
 }
 
 body {
@@ -168,6 +167,10 @@ input:focus-visible {
 }
 
 /* Perspective utilities for 3D card tilts */
+.perspective-1200 {
+  perspective: 1200px;
+}
+
 .perspective-1000 {
   perspective: 1000px;
 }

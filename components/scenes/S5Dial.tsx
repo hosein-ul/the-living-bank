@@ -1,12 +1,14 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
-import { motion, useScroll } from "framer-motion";
+import React, { useState, useRef } from "react";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { useSim } from "../sim/SimProvider";
 import { Dial } from "../atoms/Dial";
 import { CHAPTERS_CONTENT } from "@/content/chapters";
 import { sound } from "@/lib/sound";
 import { EASINGS } from "@/lib/easings";
+import { KineticText } from "../motion/KineticText";
+import { MultiParallaxLayer } from "../motion/MultiParallaxLayer";
 
 export const S5Dial: React.FC = () => {
   const content = CHAPTERS_CONTENT.s5;
@@ -18,13 +20,15 @@ export const S5Dial: React.FC = () => {
     advanceEpoch: s.advanceEpoch,
   }));
 
-  const containerRef = useRef<HTMLElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [isShaking, setIsShaking] = useState(false);
 
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start start", "end end"],
   });
+
+  const copyY = useTransform(scrollYProgress, [0, 1], [0, 30]);
 
   const handleInflow = () => {
     advanceEpoch(0.35);
@@ -42,28 +46,41 @@ export const S5Dial: React.FC = () => {
   };
 
   return (
-    <section
-      id="chapter-5"
+    <div
       ref={containerRef}
-      className={`relative min-h-[260vh] border-t border-ink/10 bg-paper transition-transform ${
+      className={`relative min-h-[260vh] border-t border-ink/10 bg-paper transition-transform overflow-hidden select-none ${
         isShaking ? "animate-shake" : ""
       }`}
     >
+      {/* Layer 0: Background Dial Compass Linework drifting [-40, -40] */}
+      <MultiParallaxLayer
+        progress={scrollYProgress}
+        vector={[-40, -40]}
+        className="absolute inset-0 pointer-events-none opacity-10 flex items-center justify-center"
+      >
+        <svg viewBox="0 0 800 800" className="w-[800px] h-[800px] max-w-none">
+          <circle cx="400" cy="400" r="350" fill="none" stroke="#b08d2e" strokeWidth="1" strokeDasharray="8 8" />
+          <line x1="400" y1="50" x2="400" y2="750" stroke="#b08d2e" strokeWidth="0.8" />
+          <line x1="50" y1="400" x2="750" y2="400" stroke="#b08d2e" strokeWidth="0.8" />
+          <circle cx="400" cy="400" r="200" fill="none" stroke="#1a1a18" strokeWidth="0.6" strokeDasharray="4 4" />
+        </svg>
+      </MultiParallaxLayer>
+
       <div className="sticky top-0 h-screen w-full flex flex-col lg:flex-row items-center justify-between p-6 sm:p-12 lg:p-16 max-w-7xl mx-auto overflow-hidden">
         {/* Copy Column (~42% desktop) */}
-        <div className="w-full lg:w-[42%] flex flex-col justify-center order-2 lg:order-1 mt-6 lg:mt-0 z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, ease: EASINGS.smooth }}
-            className="mb-3"
-          >
-            <span className="font-mono text-xs uppercase tracking-widest text-gold font-semibold flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-gold" />
-              CHAPTER {content.numeral} · {content.title}
-            </span>
-          </motion.div>
+        <motion.div
+          style={{ y: copyY }}
+          className="w-full lg:w-[42%] flex flex-col justify-center order-2 lg:order-1 mt-6 lg:mt-0 z-10"
+        >
+          <div className="mb-3 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-gold animate-live-dot" />
+            <KineticText
+              text={`CHAPTER ${content.numeral} · ${content.title}`}
+              as="span"
+              velocityReactive={true}
+              className="font-mono text-xs uppercase tracking-widest text-gold font-semibold"
+            />
+          </div>
 
           <motion.p
             initial={{ opacity: 0, y: 16 }}
@@ -75,18 +92,17 @@ export const S5Dial: React.FC = () => {
             {content.copy}
           </motion.p>
 
-          <motion.div
-            initial={{ opacity: 0, x: -12 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.2, ease: EASINGS.smooth }}
-            className="border-l-2 border-gold pl-4 py-1"
-          >
-            <p className="font-serif italic text-lg sm:text-xl text-gold font-medium">
-              &ldquo;{content.takeaway}&rdquo;
-            </p>
-          </motion.div>
-        </div>
+          {/* Gold Fraunces Italic Takeaway with KineticText */}
+          <div className="border-l-2 border-gold pl-4 py-1">
+            <KineticText
+              text={`“${content.takeaway}”`}
+              as="p"
+              italicTakeaway={true}
+              delay={0.15}
+              className="font-serif italic text-gold text-sm sm:text-base tracking-wide"
+            />
+          </div>
+        </motion.div>
 
         {/* Stage (~56% desktop) */}
         <div className="w-full lg:w-[56%] flex flex-col items-center justify-center order-1 lg:order-2 bg-paper-deep/50 p-6 sm:p-8 rounded-lg border border-ink/15 shadow-[0_12px_32px_rgba(26,26,24,0.06)]">
@@ -147,6 +163,6 @@ export const S5Dial: React.FC = () => {
           </div>
         </div>
       </div>
-    </section>
+    </div>
   );
 };

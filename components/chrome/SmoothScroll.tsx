@@ -1,9 +1,48 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { createContext, useContext, useEffect, useState, useRef, useCallback } from "react";
 import Lenis from "lenis";
 
-export const SmoothScroll: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export interface ScrollContextValue {
+  lenis: Lenis | null;
+  scrollY: number;
+  velocity: number;
+  direction: number;
+  progress: number;
+  scrollTo: (target: string | HTMLElement | number, options?: {
+    offset?: number;
+    duration?: number;
+    immediate?: boolean;
+    lock?: boolean;
+    easing?: (t: number) => number;
+    onComplete?: () => void;
+  }) => void;
+}
+
+const defaultContextValue: ScrollContextValue = {
+  lenis: null,
+  scrollY: 0,
+  velocity: 0,
+  direction: 0,
+  progress: 0,
+  scrollTo: () => {},
+};
+
+const ScrollContext = createContext<ScrollContextValue>(defaultContextValue);
+
+export const useLenisScroll = () => useContext(ScrollContext);
+
+export interface SmoothScrollProps {
+  children: React.ReactNode;
+}
+
+export const SmoothScroll: React.FC<SmoothScrollProps> = ({ children }) => {
+  const [lenisInstance, setLenisInstance] = useState<Lenis | null>(null);
+  const [scrollY, setScrollY] = useState<number>(0);
+  const [velocity, setVelocity] = useState<number>(0);
+  const [direction, setDirection] = useState<number>(0);
+  const [progress, setProgress] = useState<number>(0);
+
   const lenisRef = useRef<Lenis | null>(null);
 
   useEffect(() => {
@@ -14,25 +53,83 @@ export const SmoothScroll: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     const lenis = new Lenis({
-      lerp: 0.09,
+      lerp: 0.08,
       duration: 1.2,
       smoothWheel: true,
+      wheelMultiplier: 1.0,
+      touchMultiplier: 1.5,
+      autoResize: true,
     });
-    lenisRef.current = lenis;
 
+    lenisRef.current = lenis;
+    setLenisInstance(lenis);
+
+    lenis.on("scroll", (e: { scroll: number; velocity: number; direction: number; progress: number }) => {
+      setScrollY(e.scroll);
+      setVelocity(e.velocity);
+      setDirection(e.direction);
+      setProgress(e.progress);
+    });
+
+    let animationFrameId: number;
     function raf(time: number) {
       lenis.raf(time);
-      requestAnimationFrame(raf);
+      animationFrameId = requestAnimationFrame(raf);
     }
-
-    const animationId = requestAnimationFrame(raf);
+    animationFrameId = requestAnimationFrame(raf);
 
     return () => {
-      cancelAnimationFrame(animationId);
+      cancelAnimationFrame(animationFrameId);
       lenis.destroy();
       lenisRef.current = null;
+      setLenisInstance(null);
     };
   }, []);
 
-  return <>{children}</>;
+  const scrollTo = useCallback(
+    (
+      target: string | HTMLElement | number,
+      options?: {
+        offset?: number;
+        duration?: number;
+        immediate?: boolean;
+        lock?: boolean;
+        easing?: (t: number) => number;
+        onComplete?: () => void;
+      }
+    ) => {
+      if (lenisRef.current) {
+        lenisRef.current.scrollTo(target, {
+          duration: 1.2,
+          easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+          ...options,
+        });
+      } else {
+        if (typeof target === "number") {
+          window.scrollTo({ top: target, behavior: "smooth" });
+        } else {
+          const el = typeof target === "string" ? document.querySelector(target) : target;
+          el?.scrollIntoView({ behavior: "smooth" });
+        }
+      }
+    },
+    []
+  );
+
+  return (
+    <ScrollContext.Provider
+      value={{
+        lenis: lenisInstance,
+        scrollY,
+        velocity,
+        direction,
+        progress,
+        scrollTo,
+      }}
+    >
+      {children}
+    </ScrollContext.Provider>
+  );
 };
+
+export const ScrollProvider = SmoothScroll;

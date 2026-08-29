@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useRef, useState } from "react";
 import { createStore, useStore } from "zustand";
 import { SimEngine, SimState, INITIAL_SIM_STATE, Regime } from "@/lib/sim/engine";
+import { sound } from "@/lib/sound";
 
 export interface SimStoreState extends SimState {
   engine: SimEngine;
@@ -25,6 +26,7 @@ export function createSimStore(initialState: Partial<SimState> = {}) {
 
   return createStore<SimStoreState>((set) => {
     engine.subscribe((newState) => {
+      sound.setRegimeDrone(newState.regime);
       set({
         ...newState,
         accrualRate: engine.getAccrualRatePerSec(),

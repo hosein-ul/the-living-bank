@@ -2,10 +2,12 @@
 
 import React, { useEffect, useState } from "react";
 import { RAIL_CHAPTERS } from "@/content/chapters";
+import { useLenisScroll } from "./SmoothScroll";
 
 export const ChapterRail: React.FC = () => {
   const [activeChapter, setActiveChapter] = useState<string>("cover");
   const [visited, setVisited] = useState<Set<string>>(new Set(["cover"]));
+  const { scrollTo: lenisScrollTo } = useLenisScroll();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -37,10 +39,12 @@ export const ChapterRail: React.FC = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const scrollTo = (id: string) => {
+  const handleNavClick = (id: string) => {
     const el = document.getElementById(id);
     if (el) {
-      el.scrollIntoView({ behavior: "smooth" });
+      lenisScrollTo(el);
+    } else {
+      lenisScrollTo(`#${id}`);
     }
   };
 
@@ -56,7 +60,7 @@ export const ChapterRail: React.FC = () => {
         return (
           <button
             key={ch.id}
-            onClick={() => scrollTo(ch.id)}
+            onClick={() => handleNavClick(ch.id)}
             title={`${ch.numeral}: ${ch.label}`}
             aria-label={`Go to Chapter ${ch.numeral} — ${ch.label}`}
             className="group relative flex items-center justify-center w-6 h-6 rounded-full transition-colors focus-visible:ring-1 focus-visible:ring-gold"

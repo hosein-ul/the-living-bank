@@ -7,6 +7,10 @@ import { Odometer } from "../atoms/Odometer";
 import { CHAPTERS_CONTENT } from "@/content/chapters";
 import { sound } from "@/lib/sound";
 import { EASINGS } from "@/lib/easings";
+import { KineticText } from "../motion/KineticText";
+import { ScrubbedConduit } from "../motion/ScrubbedConduit";
+import { MultiParallaxLayer } from "../motion/MultiParallaxLayer";
+import { useLenisScroll } from "../chrome/SmoothScroll";
 
 interface CoinParticle {
   x: number;
@@ -25,8 +29,14 @@ export const S2Gate: React.FC = () => {
   const { advanceEpoch } = useSim((s) => ({
     advanceEpoch: s.advanceEpoch,
   }));
+  const { velocity } = useLenisScroll();
+  const velocityRef = useRef<number>(0);
 
-  const containerRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    velocityRef.current = velocity;
+  }, [velocity]);
+
+  const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const isDraggingRef = useRef<boolean>(false);
   const lastThresholdRef = useRef<number>(0);
@@ -122,16 +132,39 @@ export const S2Gate: React.FC = () => {
     (e.target as HTMLElement).releasePointerCapture?.(e.pointerId);
   };
 
-  // Live Canvas Coin & Crowd Particles (STREAM move)
+  // Live Canvas Coin & Crowd Particles (STREAM move) with Retina DPR & Velocity Coupling
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    let animId: number;
-    const width = (canvas.width = canvas.parentElement?.clientWidth || 700);
-    const height = (canvas.height = canvas.parentElement?.clientHeight || 450);
+    const reducedMediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let isReducedMotion = reducedMediaQuery.matches;
+
+    const handleReducedChange = (e: MediaQueryListEvent) => {
+      isReducedMotion = e.matches;
+      if (isReducedMotion) {
+        drawStatic();
+      }
+    };
+    reducedMediaQuery.addEventListener("change", handleReducedChange);
+
+    let animId: number | null = null;
+    let width = 0;
+    let height = 0;
+
+    const updateDimensions = () => {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const rect = canvas.getBoundingClientRect();
+      width = rect.width || canvas.parentElement?.clientWidth || 700;
+      height = rect.height || canvas.parentElement?.clientHeight || 450;
+      canvas.width = Math.round(width * dpr);
+      canvas.height = Math.round(height * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+
+    updateDimensions();
 
     const particles: CoinParticle[] = [];
     const maxParticles = 60;
@@ -152,24 +185,7 @@ export const S2Gate: React.FC = () => {
       });
     }
 
-    let lastTime = performance.now();
-    let spawnAccumulator = 0;
-
-    const loop = (now: number) => {
-      if (!isVisible) {
-        animId = requestAnimationFrame(loop);
-        return;
-      }
-
-      const dt = Math.min((now - lastTime) / 1000, 0.1);
-      lastTime = now;
-
-      ctx.clearRect(0, 0, width, height);
-
-      // Gate Center X
-      const gateX = width / 2;
-
-      // Draw Gate Arch Outline on Canvas
+    const drawGate = (gateX: number) => {
       ctx.save();
       ctx.strokeStyle = "rgba(26, 26, 24, 0.25)";
       ctx.lineWidth = 2.5;
@@ -180,7 +196,6 @@ export const S2Gate: React.FC = () => {
       ctx.closePath();
       ctx.stroke();
 
-      // Ambient Gate Glow based on Flow
       ctx.fillStyle =
         leverValue > 0.05
           ? "rgba(61, 107, 79, 0.08)"
@@ -189,8 +204,51 @@ export const S2Gate: React.FC = () => {
           : "rgba(176, 141, 46, 0.05)";
       ctx.fill();
       ctx.restore();
+    };
 
-      // Dynamic flow spawn rates
+    const drawStatic = () => {
+      ctx.clearRect(0, 0, width, height);
+      drawGate(width / 2);
+
+      // Draw stationary sample coins
+      for (const p of particles.slice(0, 24)) {
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.globalAlpha = p.alpha * 0.8;
+        ctx.beginPath();
+        ctx.arc(0, 0, p.size / 2, 0, Math.PI * 2);
+        ctx.fillStyle = p.inflow ? "#c9a961" : "#a33b2e";
+        ctx.fill();
+        ctx.strokeStyle = p.inflow ? "#b08d2e" : "#1a1a18";
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+        ctx.restore();
+      }
+    };
+
+    let lastTime = performance.now();
+    let spawnAccumulator = 0;
+    let scrollImpulse = 0;
+
+    const loop = (now: number) => {
+      if (!isVisible || isReducedMotion) {
+        animId = null;
+        return;
+      }
+
+      const dt = Math.min((now - lastTime) / 1000, 0.1);
+      lastTime = now;
+
+      ctx.clearRect(0, 0, width, height);
+
+      // Inertia coupling with Lenis scroll velocity
+      const targetImpulse = Math.max(-5, Math.min(5, (velocityRef.current || 0) * 0.04));
+      scrollImpulse += (targetImpulse - scrollImpulse) * 0.08;
+
+      const gateX = width / 2;
+      drawGate(gateX);
+
+      // Dynamic flow spawn rates coupled with lever value
       const inRate = Math.max(2, 10 + leverValue * 22);
       const outRate = Math.max(2, 10 - leverValue * 22);
 
@@ -227,11 +285,12 @@ export const S2Gate: React.FC = () => {
         }
       }
 
-      // Update & Draw Coin Particles with STREAM travel
+      // Update & Draw Coin Particles with STREAM travel & inertia
       for (let i = particles.length - 1; i >= 0; i--) {
         const p = particles[i];
-        p.x += p.vx * (1 + Math.abs(leverValue) * 0.5);
-        p.y += p.vy;
+        const flowMultiplier = 1 + Math.abs(leverValue) * 0.5;
+        p.x += p.vx * flowMultiplier + (p.inflow ? scrollImpulse : -scrollImpulse);
+        p.y += p.vy + Math.sin(p.rotation) * 0.3;
         p.rotation += p.vRot;
 
         // Draw Coin
@@ -272,37 +331,73 @@ export const S2Gate: React.FC = () => {
       animId = requestAnimationFrame(loop);
     };
 
-    animId = requestAnimationFrame(loop);
+    if (isReducedMotion) {
+      drawStatic();
+    } else if (isVisible) {
+      lastTime = performance.now();
+      animId = requestAnimationFrame(loop);
+    }
+
+    const handleResize = () => {
+      updateDimensions();
+      if (isReducedMotion) {
+        drawStatic();
+      }
+    };
+    window.addEventListener("resize", handleResize, { passive: true });
 
     return () => {
-      cancelAnimationFrame(animId);
+      reducedMediaQuery.removeEventListener("change", handleReducedChange);
+      window.removeEventListener("resize", handleResize);
+      if (animId !== null) {
+        cancelAnimationFrame(animId);
+      }
     };
   }, [leverValue, isVisible]);
 
   return (
-    <section
-      id="chapter-2"
+    <div
       ref={containerRef}
-      className="relative min-h-[260vh] border-t border-ink/10 bg-paper select-none"
+      className="relative min-h-[260vh] border-t border-ink/10 bg-paper select-none overflow-hidden"
     >
+      {/* Layer 0: Background Flow Conduit Vectors drifting [-30, -50] */}
+      <MultiParallaxLayer
+        progress={scrollYProgress}
+        vector={[-30, -50]}
+        className="absolute inset-0 pointer-events-none opacity-15 flex items-center justify-center"
+      >
+        <svg viewBox="0 0 1000 600" className="w-[1000px] h-[600px] max-w-none">
+          <path
+            d="M 100 300 C 300 200, 700 400, 900 300"
+            fill="none"
+            stroke="#b08d2e"
+            strokeWidth="1.5"
+            strokeDasharray="8 6"
+          />
+          <path
+            d="M 100 350 C 300 250, 700 450, 900 350"
+            fill="none"
+            stroke="#b08d2e"
+            strokeWidth="1"
+          />
+        </svg>
+      </MultiParallaxLayer>
+
       <div className="sticky top-0 h-screen w-full flex flex-col lg:flex-row items-center justify-between p-6 sm:p-12 lg:p-16 max-w-7xl mx-auto overflow-hidden">
         {/* Copy Column (~42% desktop) */}
         <motion.div
           style={{ y: copyY }}
           className="w-full lg:w-[42%] z-10 flex flex-col justify-center order-2 lg:order-1 mt-6 lg:mt-0"
         >
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, ease: EASINGS.smooth }}
-            className="mb-3"
-          >
-            <span className="font-mono text-xs uppercase tracking-widest text-gold font-semibold flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-gold animate-live-dot" />
-              CHAPTER {content.numeral} · {content.title}
-            </span>
-          </motion.div>
+          <div className="mb-3 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-gold animate-live-dot" />
+            <KineticText
+              text={`CHAPTER ${content.numeral} · ${content.title}`}
+              as="span"
+              velocityReactive={true}
+              className="font-mono text-xs uppercase tracking-widest text-gold font-semibold"
+            />
+          </div>
 
           <motion.p
             initial={{ opacity: 0, y: 16 }}
@@ -315,7 +410,7 @@ export const S2Gate: React.FC = () => {
           </motion.p>
 
           {/* Odometer readout card for Net ETH Flow */}
-          <div className="p-5 rounded bg-paper-deep border border-ink/15 mb-6 flex items-center justify-between shadow-sm">
+          <div className="p-5 rounded bg-paper-deep border border-ink/15 mb-4 flex items-center justify-between shadow-sm">
             <div>
               <span className="font-mono text-[10px] text-ink-60 uppercase tracking-widest block mb-1">
                 POLICY INPUT · NET ETH FLOW
@@ -346,18 +441,37 @@ export const S2Gate: React.FC = () => {
             </div>
           </div>
 
-          {/* Gold Fraunces Italic Takeaway */}
-          <motion.div
-            initial={{ opacity: 0, x: -12 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.2, ease: EASINGS.smooth }}
-            className="border-l-2 border-gold pl-4 py-1"
-          >
-            <span className="font-serif italic text-gold text-sm sm:text-base tracking-wide block">
-              &ldquo;{content.takeaway}&rdquo;
-            </span>
-          </motion.div>
+          {/* Scroll-Scrubbed Net ETH Flow Vector Conduit */}
+          <div className="w-full my-2 p-2 bg-paper-deep/60 rounded border border-ink/10">
+            <div className="flex justify-between items-center text-[9px] font-mono text-ink-60 uppercase tracking-wider mb-1">
+              <span>UNISWAP V4 POOL</span>
+              <span className={leverValue > 0 ? "text-green font-bold" : "text-red font-bold"}>
+                {leverValue > 0 ? "STREAMING INFLOW →" : "← STREAMING OUTFLOW"}
+              </span>
+              <span>BANK GATE</span>
+            </div>
+            <ScrubbedConduit
+              d="M 10 15 C 100 5, 200 25, 390 15"
+              progress={scrollYProgress}
+              progressRange={[0.05, 0.95]}
+              strokeColor={leverValue > 0.05 ? "#3d6b4f" : leverValue < -0.05 ? "#a33b2e" : "#b08d2e"}
+              strokeWidth={2.4}
+              viewBox="0 0 400 30"
+              direction={leverValue >= 0 ? "forward" : "reverse"}
+              className="w-full h-6"
+            />
+          </div>
+
+          {/* Gold Fraunces Italic Takeaway with KineticText */}
+          <div className="border-l-2 border-gold pl-4 py-1 mt-2">
+            <KineticText
+              text={`“${content.takeaway}”`}
+              as="p"
+              italicTakeaway={true}
+              delay={0.15}
+              className="font-serif italic text-gold text-sm sm:text-base tracking-wide"
+            />
+          </div>
         </motion.div>
 
         {/* Interactive Gate & Lever Arena (~55% desktop) */}
@@ -427,6 +541,6 @@ export const S2Gate: React.FC = () => {
           </div>
         </div>
       </div>
-    </section>
+    </div>
   );
 };

@@ -1,13 +1,16 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence, useScroll } from "framer-motion";
+import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 import { useSim } from "../sim/SimProvider";
 import { Furnace } from "../atoms/Furnace";
 import { formatNumber, formatPips, formatRate } from "../sim/formatters";
 import { CHAPTERS_CONTENT } from "@/content/chapters";
 import { sound } from "@/lib/sound";
 import { EASINGS } from "@/lib/easings";
+import { KineticText } from "../motion/KineticText";
+import { ScrubbedConduit } from "../motion/ScrubbedConduit";
+import { MultiParallaxLayer } from "../motion/MultiParallaxLayer";
 
 export const S4Furnace: React.FC = () => {
   const content = CHAPTERS_CONTENT.s4;
@@ -27,7 +30,7 @@ export const S4Furnace: React.FC = () => {
     buyLicense: s.buyLicense,
   }));
 
-  const containerRef = useRef<HTMLElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [burnTimestamp, setBurnTimestamp] = useState<number>(0);
   const [hasBoughtOnce, setHasBoughtOnce] = useState<boolean>(false);
   const [flyingCoin, setFlyingCoin] = useState<boolean>(false);
@@ -37,6 +40,8 @@ export const S4Furnace: React.FC = () => {
     target: containerRef,
     offset: ["start start", "end end"],
   });
+
+  const copyY = useTransform(scrollYProgress, [0, 1], [0, 30]);
 
   useEffect(() => {
     return scrollYProgress.on("change", (latest) => {
@@ -75,27 +80,41 @@ export const S4Furnace: React.FC = () => {
     }
   };
 
+  // Exponential decay curve for Dutch Auction
+  const auctionCurvePath = "M 10 12 C 120 14, 240 38, 390 48";
+
   return (
-    <section
-      id="chapter-4"
+    <div
       ref={containerRef}
-      className="relative min-h-[260vh] border-t border-ink/10 bg-paper"
+      className="relative min-h-[260vh] border-t border-ink/10 bg-paper select-none overflow-hidden"
     >
+      {/* Layer 0: Background Crucible Embers Linework drifting [-30, -50] */}
+      <MultiParallaxLayer
+        progress={scrollYProgress}
+        vector={[-30, -50]}
+        className="absolute inset-0 pointer-events-none opacity-10 flex items-center justify-center"
+      >
+        <svg viewBox="0 0 800 800" className="w-[800px] h-[800px] max-w-none">
+          <circle cx="400" cy="400" r="300" fill="none" stroke="#a33b2e" strokeWidth="1" strokeDasharray="4 6" />
+          <polygon points="400,150 480,300 650,300 520,400 570,550 400,450 230,550 280,400 150,300 320,300" fill="none" stroke="#b08d2e" strokeWidth="0.8" />
+        </svg>
+      </MultiParallaxLayer>
+
       <div className="sticky top-0 h-screen w-full flex flex-col lg:flex-row items-center justify-between p-6 sm:p-12 lg:p-16 max-w-7xl mx-auto overflow-hidden">
         {/* Copy Column (~42% desktop) */}
-        <div className="w-full lg:w-[42%] flex flex-col justify-center order-2 lg:order-1 mt-6 lg:mt-0 z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, ease: EASINGS.smooth }}
-            className="mb-3"
-          >
-            <span className="font-mono text-xs uppercase tracking-widest text-gold font-semibold flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-gold" />
-              CHAPTER {content.numeral} · {content.title}
-            </span>
-          </motion.div>
+        <motion.div
+          style={{ y: copyY }}
+          className="w-full lg:w-[42%] flex flex-col justify-center order-2 lg:order-1 mt-6 lg:mt-0 z-10"
+        >
+          <div className="mb-3 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-gold animate-live-dot" />
+            <KineticText
+              text={`CHAPTER ${content.numeral} · ${content.title}`}
+              as="span"
+              velocityReactive={true}
+              className="font-mono text-xs uppercase tracking-widest text-gold font-semibold"
+            />
+          </div>
 
           <motion.p
             initial={{ opacity: 0, y: 16 }}
@@ -122,45 +141,58 @@ export const S4Furnace: React.FC = () => {
             )}
           </AnimatePresence>
 
-          <motion.div
-            initial={{ opacity: 0, x: -12 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.2, ease: EASINGS.smooth }}
-            className="border-l-2 border-gold pl-4 py-1"
-          >
-            <p className="font-serif italic text-lg sm:text-xl text-gold font-medium">
-              &ldquo;{content.takeaway}&rdquo;
-            </p>
-          </motion.div>
-        </div>
+          {/* Gold Fraunces Italic Takeaway with KineticText */}
+          <div className="border-l-2 border-gold pl-4 py-1">
+            <KineticText
+              text={`“${content.takeaway}”`}
+              as="p"
+              italicTakeaway={true}
+              delay={0.15}
+              className="font-serif italic text-gold text-sm sm:text-base tracking-wide"
+            />
+          </div>
+        </motion.div>
 
         {/* Stage (~56% desktop) */}
         <div className="w-full lg:w-[56%] flex flex-col items-center justify-center bg-paper-deep/50 p-6 sm:p-8 rounded-lg border border-ink/15 shadow-[0_12px_32px_rgba(26,26,24,0.06)] order-1 lg:order-2">
-          {/* Top: 24h Expansion License Dutch Auction Rail */}
-          <div className="w-full mb-6">
+          {/* Top: 24h Expansion License Dutch Auction Rail & Exponential Curve */}
+          <div className="w-full mb-5 p-3.5 bg-paper rounded-lg border border-ink/15 shadow-sm">
             <div className="flex justify-between items-center mb-1.5 font-mono text-[11px] sm:text-xs uppercase tracking-wider text-ink-60">
-              <span className="font-semibold">24h Auction Rail</span>
+              <span className="font-semibold">24h Dutch Auction Decay</span>
               <span className="text-gold font-bold">
                 Price: {formatNumber(licensePrice)} $STANDARD
               </span>
             </div>
 
-            {/* Auction Rail Bar */}
-            <div className="relative w-full h-3.5 bg-paper border border-ink/25 rounded-full flex items-center shadow-inner">
-              {/* Exponential price gradient marker */}
+            {/* Scroll-Scrubbed Dutch Auction Exponential Decay Curve */}
+            <div className="relative w-full h-14 overflow-visible">
+              <ScrubbedConduit
+                d={auctionCurvePath}
+                progress={scrollYProgress}
+                progressRange={[0, 1]}
+                strokeColor="#b08d2e"
+                strokeWidth={2.4}
+                viewBox="0 0 400 60"
+                className="w-full h-full"
+                animatedGlow={true}
+              />
+
+              {/* Dynamic Tracking Marker along Dutch Auction Rail */}
               <div
-                style={{ left: `${trackProgress * 100}%` }}
-                className="absolute -translate-x-1/2 w-5 h-5 rounded-full bg-gold border-2 border-[#8e6e22] shadow-md transition-all duration-150 flex items-center justify-center"
+                style={{
+                  left: `calc(10px + ${trackProgress * 95}%)`,
+                  top: `calc(12px + ${Math.pow(trackProgress, 0.8) * 32}px)`,
+                }}
+                className="absolute -translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-gold border-2 border-[#8e6e22] shadow-md transition-all duration-150 flex items-center justify-center pointer-events-none"
               >
                 <div className="w-1.5 h-1.5 rounded-full bg-paper" />
               </div>
             </div>
 
-            <div className="flex justify-between items-center mt-1.5 font-mono text-[9.5px] text-ink-60 font-medium">
-              <span>00:00 (Open 2×)</span>
-              <span>12:00</span>
-              <span>24:00 (Floor)</span>
+            <div className="flex justify-between items-center font-mono text-[9.5px] text-ink-60 font-medium pt-1 border-t border-ink/10">
+              <span>00:00 (Open 2× Peak)</span>
+              <span>12:00 (Exponential Decay)</span>
+              <span>24:00 (Floor Reserve)</span>
             </div>
           </div>
 
@@ -226,6 +258,6 @@ export const S4Furnace: React.FC = () => {
           </div>
         </div>
       </div>
-    </section>
+    </div>
   );
 };

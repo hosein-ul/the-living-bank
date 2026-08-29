@@ -1,12 +1,15 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import { motion, useScroll } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { useSim } from "../sim/SimProvider";
 import { formatNumber } from "../sim/formatters";
 import { CHAPTERS_CONTENT } from "@/content/chapters";
 import { sound } from "@/lib/sound";
 import { EASINGS } from "@/lib/easings";
+import { KineticText } from "../motion/KineticText";
+import { ScrubbedConduit } from "../motion/ScrubbedConduit";
+import { MultiParallaxLayer } from "../motion/MultiParallaxLayer";
 
 export const S6Vaults: React.FC = () => {
   const content = CHAPTERS_CONTENT.s6;
@@ -28,7 +31,7 @@ export const S6Vaults: React.FC = () => {
     triggerBuybackPuff: s.triggerBuybackPuff,
   }));
 
-  const containerRef = useRef<HTMLElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [lastPuffTime, setLastPuffTime] = useState<number>(0);
   const [puffing, setPuffing] = useState<boolean>(false);
 
@@ -36,6 +39,8 @@ export const S6Vaults: React.FC = () => {
     target: containerRef,
     offset: ["start start", "end end"],
   });
+
+  const copyY = useTransform(scrollYProgress, [0, 1], [0, 30]);
 
   const handlePuff = () => {
     const now = Date.now();
@@ -53,27 +58,45 @@ export const S6Vaults: React.FC = () => {
 
   const isExpansion = regime === "EXPANSION";
 
+  // Conduit SVG paths for 3-way Splitter
+  const mainStemPath = "M 200 0 L 200 15";
+  const branch70Path = "M 200 15 Q 200 25 70 30";
+  const branch15CenterPath = "M 200 15 L 200 30";
+  const branch15RightPath = "M 200 15 Q 200 25 330 30";
+
   return (
-    <section
-      id="chapter-6"
+    <div
       ref={containerRef}
-      className="relative min-h-[260vh] border-t border-ink/10 bg-paper"
+      className="relative min-h-[260vh] border-t border-ink/10 bg-paper select-none overflow-hidden"
     >
+      {/* Layer 0: Background Vault Treasury Linework drifting [-30, -50] */}
+      <MultiParallaxLayer
+        progress={scrollYProgress}
+        vector={[-30, -50]}
+        className="absolute inset-0 pointer-events-none opacity-10 flex items-center justify-center"
+      >
+        <svg viewBox="0 0 800 800" className="w-[800px] h-[800px] max-w-none">
+          <rect x="250" y="250" width="300" height="300" rx="20" fill="none" stroke="#b08d2e" strokeWidth="1" strokeDasharray="6 6" />
+          <circle cx="400" cy="400" r="110" fill="none" stroke="#b08d2e" strokeWidth="0.8" />
+          <circle cx="400" cy="400" r="60" fill="none" stroke="#3d6b4f" strokeWidth="0.8" />
+        </svg>
+      </MultiParallaxLayer>
+
       <div className="sticky top-0 h-screen w-full flex flex-col lg:flex-row items-center justify-between p-6 sm:p-12 lg:p-16 max-w-7xl mx-auto overflow-hidden">
         {/* Copy Column (~42% desktop) */}
-        <div className="w-full lg:w-[42%] flex flex-col justify-center order-2 lg:order-1 mt-6 lg:mt-0 z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, ease: EASINGS.smooth }}
-            className="mb-3"
-          >
-            <span className="font-mono text-xs uppercase tracking-widest text-gold font-semibold flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-gold" />
-              CHAPTER {content.numeral} · {content.title}
-            </span>
-          </motion.div>
+        <motion.div
+          style={{ y: copyY }}
+          className="w-full lg:w-[42%] flex flex-col justify-center order-2 lg:order-1 mt-6 lg:mt-0 z-10"
+        >
+          <div className="mb-3 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-gold animate-live-dot" />
+            <KineticText
+              text={`CHAPTER ${content.numeral} · ${content.title}`}
+              as="span"
+              velocityReactive={true}
+              className="font-mono text-xs uppercase tracking-widest text-gold font-semibold"
+            />
+          </div>
 
           <motion.p
             initial={{ opacity: 0, y: 16 }}
@@ -85,23 +108,22 @@ export const S6Vaults: React.FC = () => {
             {content.copy}
           </motion.p>
 
-          <motion.div
-            initial={{ opacity: 0, x: -12 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.2, ease: EASINGS.smooth }}
-            className="border-l-2 border-gold pl-4 py-1"
-          >
-            <p className="font-serif italic text-lg sm:text-xl text-gold font-medium">
-              &ldquo;{content.takeaway}&rdquo;
-            </p>
-          </motion.div>
-        </div>
+          {/* Gold Fraunces Italic Takeaway with KineticText */}
+          <div className="border-l-2 border-gold pl-4 py-1">
+            <KineticText
+              text={`“${content.takeaway}”`}
+              as="p"
+              italicTakeaway={true}
+              delay={0.15}
+              className="font-serif italic text-gold text-sm sm:text-base tracking-wide"
+            />
+          </div>
+        </motion.div>
 
         {/* Stage (~56% desktop): The Vault Switchboard */}
         <div className="w-full lg:w-[56%] flex flex-col items-center justify-center bg-paper-deep/50 p-6 sm:p-8 rounded-lg border border-ink/15 shadow-[0_12px_32px_rgba(26,26,24,0.06)] order-1 lg:order-2">
           {/* Regime Switchboard Toggle */}
-          <div className="w-full flex items-center justify-between pb-4 border-b border-ink/10 mb-5">
+          <div className="w-full flex items-center justify-between pb-4 border-b border-ink/10 mb-4">
             <span className="font-mono text-xs uppercase tracking-wider text-ink-60 font-semibold">
               Active Vault Routing
             </span>
@@ -137,31 +159,64 @@ export const S6Vaults: React.FC = () => {
             </div>
           </div>
 
-          {/* SVG Animated Flow Conduits */}
-          <div className="w-full h-8 mb-2 relative flex items-center justify-center">
-            <svg viewBox="0 0 400 30" className="w-full h-full">
-              <path
-                d="M 200 0 L 200 15 Q 200 25 70 25 M 200 15 L 200 30 M 200 15 Q 200 25 330 25"
-                fill="none"
-                stroke="#b08d2e"
-                strokeWidth="1.8"
-                strokeDasharray="4 3"
-                className="animate-[dash_20s_linear_infinite]"
-              />
-            </svg>
+          {/* SVG Dynamic Scrubbed Conduits for 70/15/15 Splitter */}
+          <div className="w-full h-10 mb-2 relative flex items-center justify-center overflow-visible">
+            {/* Main Inflow Stem */}
+            <ScrubbedConduit
+              d={mainStemPath}
+              progress={scrollYProgress}
+              progressRange={[0, 0.4]}
+              strokeColor="#b08d2e"
+              strokeWidth={2.4}
+              viewBox="0 0 400 35"
+              className="absolute inset-0 w-full h-full"
+            />
+            {/* 70% Branch (Gold or Red depending on Regime) */}
+            <ScrubbedConduit
+              d={branch70Path}
+              progress={scrollYProgress}
+              progressRange={[0.2, 0.85]}
+              strokeColor={isExpansion ? "#3d6b4f" : "#a33b2e"}
+              strokeWidth={2.6}
+              viewBox="0 0 400 35"
+              className="absolute inset-0 w-full h-full"
+              animatedGlow={true}
+            />
+            {/* 15% Center Branch (POL Lake) */}
+            <ScrubbedConduit
+              d={branch15CenterPath}
+              progress={scrollYProgress}
+              progressRange={[0.2, 0.85]}
+              strokeColor="#b08d2e"
+              strokeWidth={2.0}
+              viewBox="0 0 400 35"
+              className="absolute inset-0 w-full h-full"
+            />
+            {/* 15% Right Branch (Team Purse) */}
+            <ScrubbedConduit
+              d={branch15RightPath}
+              progress={scrollYProgress}
+              progressRange={[0.2, 0.85]}
+              strokeColor="#1a1a18"
+              strokeWidth={2.0}
+              viewBox="0 0 400 35"
+              className="absolute inset-0 w-full h-full"
+            />
           </div>
 
           {/* 3-Way Splitter Valve (70 / 15 / 15) */}
           <div className="w-full flex items-center justify-around mb-5 text-center font-mono text-xs bg-paper p-3 rounded border border-ink/15 shadow-sm">
             <div className="flex flex-col items-center">
-              <span className="text-gold font-bold text-base">70%</span>
+              <span className={`font-bold text-base ${isExpansion ? "text-green" : "text-red"}`}>
+                70%
+              </span>
               <span className="text-[10px] text-ink-60 uppercase font-semibold">
                 {isExpansion ? "Gold Vault" : "Buyback Vault"}
               </span>
             </div>
             <span className="text-ink-40 font-bold">/</span>
             <div className="flex flex-col items-center">
-              <span className="text-ink font-bold text-base">15%</span>
+              <span className="text-gold font-bold text-base">15%</span>
               <span className="text-[10px] text-ink-60 uppercase font-semibold">POL Lake</span>
             </div>
             <span className="text-ink-40 font-bold">/</span>
@@ -266,6 +321,6 @@ export const S6Vaults: React.FC = () => {
           </div>
         </div>
       </div>
-    </section>
+    </div>
   );
 };
