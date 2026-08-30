@@ -66,9 +66,10 @@ export const S7Run: React.FC = () => {
   const burnCrucibleBranch = "M 200 12 Q 200 22 320 28";
 
   return (
-    <div
-      ref={containerRef}
-      className="relative min-h-[260vh] border-t border-ink/10 bg-paper select-none overflow-hidden"
+    <section
+      id="chapter-7"
+      ref={containerRef as unknown as React.RefObject<HTMLElement>}
+      className="relative min-h-[260vh] border-t border-ink/10 bg-paper select-none"
     >
       {/* Layer 0: Background Panic Tension Linework drifting [-30, -50] */}
       <MultiParallaxLayer
@@ -257,6 +258,6 @@ export const S7Run: React.FC = () => {
           )}
         </div>
       </div>
-    </div>
+    </section>
   );
 };

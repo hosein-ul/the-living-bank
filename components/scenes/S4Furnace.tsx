@@ -84,9 +84,10 @@ export const S4Furnace: React.FC = () => {
   const auctionCurvePath = "M 10 12 C 120 14, 240 38, 390 48";
 
   return (
-    <div
-      ref={containerRef}
-      className="relative min-h-[260vh] border-t border-ink/10 bg-paper select-none overflow-hidden"
+    <section
+      id="chapter-4"
+      ref={containerRef as unknown as React.RefObject<HTMLElement>}
+      className="relative min-h-[260vh] border-t border-ink/10 bg-paper select-none"
     >
       {/* Layer 0: Background Crucible Embers Linework drifting [-30, -50] */}
       <MultiParallaxLayer
@@ -258,6 +259,6 @@ export const S4Furnace: React.FC = () => {
           </div>
         </div>
       </div>
-    </div>
+    </section>
   );
 };

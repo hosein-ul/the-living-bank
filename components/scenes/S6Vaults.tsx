@@ -65,9 +65,10 @@ export const S6Vaults: React.FC = () => {
   const branch15RightPath = "M 200 15 Q 200 25 330 30";
 
   return (
-    <div
-      ref={containerRef}
-      className="relative min-h-[260vh] border-t border-ink/10 bg-paper select-none overflow-hidden"
+    <section
+      id="chapter-6"
+      ref={containerRef as unknown as React.RefObject<HTMLElement>}
+      className="relative min-h-[260vh] border-t border-ink/10 bg-paper select-none"
     >
       {/* Layer 0: Background Vault Treasury Linework drifting [-30, -50] */}
       <MultiParallaxLayer
@@ -321,6 +322,6 @@ export const S6Vaults: React.FC = () => {
           </div>
         </div>
       </div>
-    </div>
+    </section>
   );
 };

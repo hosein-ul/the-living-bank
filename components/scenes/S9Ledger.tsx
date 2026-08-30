@@ -56,9 +56,10 @@ export const S9Ledger: React.FC = () => {
   ];
 
   return (
-    <div
-      ref={containerRef}
-      className="relative min-h-[260vh] border-t border-ink/10 bg-paper select-none overflow-hidden"
+    <section
+      id="chapter-9"
+      ref={containerRef as unknown as React.RefObject<HTMLElement>}
+      className="relative min-h-[260vh] border-t border-ink/10 bg-paper select-none"
     >
       {/* Layer 0: Background Ledger Ruling Grid Linework drifting [-35, -60] */}
       <MultiParallaxLayer
@@ -192,6 +193,6 @@ export const S9Ledger: React.FC = () => {
           </div>
         </div>
       </div>
-    </div>
+    </section>
   );
 };

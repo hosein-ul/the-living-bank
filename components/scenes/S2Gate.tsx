@@ -356,9 +356,10 @@ export const S2Gate: React.FC = () => {
   }, [leverValue, isVisible]);
 
   return (
-    <div
-      ref={containerRef}
-      className="relative min-h-[260vh] border-t border-ink/10 bg-paper select-none overflow-hidden"
+    <section
+      id="chapter-2"
+      ref={containerRef as unknown as React.RefObject<HTMLElement>}
+      className="relative min-h-[260vh] border-t border-ink/10 bg-paper select-none"
     >
       {/* Layer 0: Background Flow Conduit Vectors drifting [-30, -50] */}
       <MultiParallaxLayer
@@ -541,6 +542,6 @@ export const S2Gate: React.FC = () => {
           </div>
         </div>
       </div>
-    </div>
+    </section>
   );
 };

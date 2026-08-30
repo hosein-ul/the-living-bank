@@ -217,8 +217,9 @@ export const S10Epilogue: React.FC = () => {
   };
 
   return (
-    <div
-      className="relative min-h-screen py-24 px-6 sm:px-12 lg:px-16 border-t border-ink/10 flex flex-col items-center justify-center bg-paper text-center overflow-hidden"
+    <section
+      id="chapter-10"
+      className="relative min-h-screen py-24 px-6 sm:px-12 lg:px-16 border-t border-ink/10 flex flex-col items-center justify-center bg-paper text-center"
     >
       <div className="w-full max-w-4xl mx-auto flex flex-col items-center">
         {/* Seal Stamp */}
@@ -315,6 +316,6 @@ export const S10Epilogue: React.FC = () => {
           {content.disclaimer}
         </p>
       </div>
-    </div>
+    </section>
   );
 };

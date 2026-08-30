@@ -62,9 +62,10 @@ export const S8Ghost: React.FC = () => {
   };
 
   return (
-    <div
-      ref={containerRef}
-      className="relative min-h-[260vh] border-t border-ink/10 bg-[#eae5d8] select-none overflow-hidden"
+    <section
+      id="chapter-8"
+      ref={containerRef as unknown as React.RefObject<HTMLElement>}
+      className="relative min-h-[260vh] border-t border-ink/10 bg-[#eae5d8] select-none"
     >
       {/* Layer 0: Background Dormant Hourglass Linework drifting [-30, -50] */}
       <MultiParallaxLayer
@@ -195,6 +196,6 @@ export const S8Ghost: React.FC = () => {
           )}
         </div>
       </div>
-    </div>
+    </section>
   );
 };

@@ -46,9 +46,10 @@ export const S5Dial: React.FC = () => {
   };
 
   return (
-    <div
-      ref={containerRef}
-      className={`relative min-h-[260vh] border-t border-ink/10 bg-paper transition-transform overflow-hidden select-none ${
+    <section
+      id="chapter-5"
+      ref={containerRef as unknown as React.RefObject<HTMLElement>}
+      className={`relative min-h-[260vh] border-t border-ink/10 bg-paper transition-transform select-none ${
         isShaking ? "animate-shake" : ""
       }`}
     >
@@ -163,6 +164,6 @@ export const S5Dial: React.FC = () => {
           </div>
         </div>
       </div>
-    </div>
+    </section>
   );
 };

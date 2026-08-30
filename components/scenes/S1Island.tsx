@@ -56,9 +56,10 @@ export const S1Island: React.FC = () => {
   };
 
   return (
-    <div
-      ref={containerRef}
-      className="relative min-h-[280vh] border-t border-ink/10 bg-paper overflow-hidden"
+    <section
+      id="chapter-1"
+      ref={containerRef as unknown as React.RefObject<HTMLElement>}
+      className="relative min-h-[280vh] border-t border-ink/10 bg-paper"
     >
       {/* Layer 0: Background Topographic Contour Lines drifting [-35, -50] */}
       <MultiParallaxLayer
@@ -176,6 +177,6 @@ export const S1Island: React.FC = () => {
           />
         </motion.div>
       </div>
-    </div>
+    </section>
   );
 };

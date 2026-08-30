@@ -200,9 +200,10 @@ export const S0Cover: React.FC = () => {
   };
 
   return (
-    <div
-      ref={sectionRef as unknown as React.RefObject<HTMLDivElement>}
-      className="relative min-h-screen flex flex-col items-center justify-between px-6 py-16 sm:py-24 text-center overflow-hidden"
+    <section
+      id="cover"
+      ref={sectionRef as unknown as React.RefObject<HTMLElement>}
+      className="relative min-h-screen flex flex-col items-center justify-between px-6 py-16 sm:py-24 text-center"
       style={{
         background:
           "radial-gradient(ellipse at center, rgba(244,241,234,0.4) 0%, rgba(233,228,216,0.92) 100%)",
@@ -318,6 +319,6 @@ export const S0Cover: React.FC = () => {
           <WaxSeal text="STANDARD" subtext="RESERVE" size={88} animateStamp />
         </MultiParallaxLayer>
       )}
-    </div>
+    </section>
   );
 };

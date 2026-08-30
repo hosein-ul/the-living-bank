@@ -81,9 +81,10 @@ export const S3Charter: React.FC = () => {
   };
 
   return (
-    <div
-      ref={containerRef}
-      className="relative min-h-[250vh] border-t border-ink/10 bg-paper select-none overflow-hidden"
+    <section
+      id="chapter-3"
+      ref={containerRef as unknown as React.RefObject<HTMLElement>}
+      className="relative min-h-[250vh] border-t border-ink/10 bg-paper select-none"
     >
       {/* Layer 0: Background Sovereign Seal Watermark drifting [-35, -45] */}
       <MultiParallaxLayer
@@ -246,6 +247,6 @@ export const S3Charter: React.FC = () => {
           </MultiParallaxLayer>
         </div>
       </div>
-    </div>
+    </section>
   );
 };
