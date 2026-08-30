@@ -47,7 +47,7 @@ export const ThreeIsland: React.FC<ThreeIslandProps> = ({
       renderer = new THREE.WebGLRenderer({
         antialias: true,
         alpha: true,
-        powerPreference: "high-performance",
+        powerPreference: "default",
         failIfMajorPerformanceCaveat: false,
       });
       renderer.setSize(width, height);
@@ -57,9 +57,22 @@ export const ThreeIsland: React.FC<ThreeIslandProps> = ({
       container.innerHTML = "";
       container.appendChild(renderer.domElement);
     } catch (err) {
-      console.warn("WebGL not supported; using fallback.", err);
-      setWebGLSupported(false);
-      return;
+      console.warn("WebGL primary init failed, trying basic context:", err);
+      try {
+        renderer = new THREE.WebGLRenderer({
+          antialias: false,
+          alpha: true,
+          failIfMajorPerformanceCaveat: false,
+        });
+        renderer.setSize(width, height);
+        renderer.setPixelRatio(1);
+        container.innerHTML = "";
+        container.appendChild(renderer.domElement);
+      } catch (err2) {
+        console.warn("WebGL completely unavailable; using fallback SVG.", err2);
+        setWebGLSupported(false);
+        return;
+      }
     }
 
     // Warm Architectural Lighting
@@ -333,8 +346,8 @@ export const ThreeIsland: React.FC<ThreeIslandProps> = ({
       const elapsed = clock.getElapsedTime();
       const p = scrollDataRef.current.p;
 
-      // Scroll-driven camera orbit: starts angled, rotates smoothly, ending on hero view of the door
-      const targetOrbit = (1 - p) * Math.PI * 0.7 - Math.PI * 0.15;
+      // Scroll-driven camera orbit: starts directly facing front (stairs and bronze door), rotates as user scrubs
+      const targetOrbit = p * Math.PI * 0.45;
       currentOrbit += (targetOrbit - currentOrbit) * 0.1;
 
       bankGroup.rotation.y = currentOrbit + (isReducedMotion ? 0 : mouseRef.current.x);
@@ -404,9 +417,27 @@ export const ThreeIsland: React.FC<ThreeIslandProps> = ({
   if (!webGLSupported) {
     return (
       <div className={`w-full h-full flex flex-col items-center justify-center p-6 bg-transparent text-center select-none ${className}`}>
-        <span className="font-mono text-xs uppercase tracking-widest text-gold font-semibold">
-          THE MONUMENTAL BANK (3D ENGINE)
-        </span>
+        <svg viewBox="0 0 500 350" className="w-full max-w-md max-h-[380px] drop-shadow-xl" fill="none">
+          {/* Base Plinth & Stairs */}
+          <rect x="50" y="240" width="400" height="24" fill="#baa98c" stroke="#b08d2e" strokeWidth="1.5" />
+          <rect x="70" y="225" width="360" height="15" fill="#d8cdb4" stroke="#b08d2e" strokeWidth="1" />
+          <rect x="90" y="210" width="320" height="15" fill="#e4dbca" stroke="#b08d2e" strokeWidth="1" />
+          {/* 8 Columns */}
+          {Array.from({ length: 8 }).map((_, i) => (
+            <g key={i}>
+              <rect x={110 + i * 40} y="110" width="16" height="100" fill="#e4dbca" stroke="#b08d2e" strokeWidth="1" />
+              <rect x={108 + i * 40} y="105" width="20" height="5" fill="#c9a961" />
+              <rect x={108 + i * 40} y="206" width="20" height="4" fill="#c9a961" />
+            </g>
+          ))}
+          {/* Dark Bronze Center Door */}
+          <rect x="232" y="140" width="36" height="70" fill="#161514" stroke="#c9a961" strokeWidth="2" />
+          <line x1="250" y1="140" x2="250" y2="210" stroke="#c9a961" strokeWidth="1" />
+          {/* Entablature & Pediment */}
+          <rect x="90" y="90" width="320" height="18" fill="#d8cdb4" stroke="#b08d2e" strokeWidth="1.5" />
+          <polygon points="250,35 85,90 415,90" fill="#e4dbca" stroke="#b08d2e" strokeWidth="2" />
+          <circle cx="250" cy="70" r="12" fill="#c9a961" stroke="#b08d2e" strokeWidth="1" />
+        </svg>
       </div>
     );
   }

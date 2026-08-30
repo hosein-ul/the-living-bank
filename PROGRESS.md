@@ -265,3 +265,44 @@ Gate result: `npx tsc --noEmit` clean (0 errors), `NODE_OPTIONS=--max-old-space-
 - `task5_charter_after_claim.png`: Open 3D ledger book with gold silk ribbon, active charter certificate, and animated fountain pen signature.
 - `task5_sanity_01_cover.png`, `task5_sanity_02_dial.png`, `task5_sanity_03_epilogue.png`: Full scroll-through sanity verification.
 
+---
+
+## TASK6 — Critical Scroller Repair, Island Orientation & Full Browser Audit — DONE 2026-08-30
+Gate result: `npx tsc --noEmit` clean (0 errors), `NODE_OPTIONS=--max-old-space-size=1024 npm run build` passed (0 errors, 4/4 static pages generated). Real mouse wheel test confirmed monotonic non-zero scroll advancement (`+2250px` across 10 wheel events). Full 11-chapter browser audit passed across desktop and 390px mobile viewports.
+
+### 1. Scroller Root Cause Diagnosis & Pure ScrollTrigger Scrub Architecture
+- **Diagnosis**: ScrollSmoother's `#smooth-wrapper` wrapper (`position: fixed; height: 100vh; overflow: hidden`) was trapping native wheel events, preventing document scroll while fixed HUD elements lost their viewport anchoring.
+- **Architectural Fix**:
+  - Removed wrapper traps; restored 100% natural document flow on `html` and `body` with `overflow: visible`.
+  - Rebuilt `SmoothScroll.tsx` with a lightweight, zero-overhead GSAP `ScrollTrigger` kinetic context (`scrollY`, `velocity`, `direction`, `progress`) driving animations directly against native `window.scrollY`.
+  - Real browser mouse wheel events now advance `window.scrollY` smoothly, instantly, and monotonically across all desktop and touch devices.
+
+### 2. ThreeIsland Camera & Front Orientation Fix
+- **Diagnosis**: At progress 0, `targetOrbit` was computed as `(1 - p) * Math.PI * 0.7 - Math.PI * 0.15` (= `0.55 * Math.PI`), which rotated the 3D neoclassical bank 100° away from the viewer, showing its side/back.
+- **Fix in `ThreeIsland.tsx`**:
+  - Updated orbit calculation to `targetOrbit = p * Math.PI * 0.45` so that at `p = 0`, `targetOrbit = 0`.
+  - The bank now directly faces the camera at progress 0, showcasing the 5 grand stone steps, 8 columns, pediment gold medallion, and centered dark bronze double doors.
+  - Enhanced WebGL initialization with dual-context fallback and architectural SVG illustration fallback.
+
+### 3. Full 11-Section Browser Audit Table
+
+| Section | Status | Midpoint (px) | Verification Screenshot |
+|---|---|---|---|
+| **Cover** | PASS | 400px | `task6_mid_00_cover.png` |
+| **I · One Door** | PASS | 1,300px | `task6_mid_01_chapter_1.png` / `task6_01_island_front_facing.png` |
+| **II · The Only Number** | PASS | 3,820px | `task6_mid_02_chapter_2.png` |
+| **III · The Charter** | PASS | 6,160px | `task6_mid_03_chapter_3.png` / `task6_interactive_03_charter_opened.png` |
+| **IV · Growth Burns** | PASS | 8,500px | `task6_mid_04_chapter_4.png` |
+| **V · The Temper** | PASS | 10,840px | `task6_mid_05_chapter_5.png` |
+| **VI · Where Fees Go** | PASS | 13,180px | `task6_mid_06_chapter_6.png` |
+| **VII · The Run, Inverted** | PASS | 15,520px | `task6_mid_07_chapter_7.png` |
+| **VIII · Ghosts** | PASS | 17,500px | `task6_mid_08_chapter_8.png` |
+| **IX · The Ledger** | PASS | 19,660px | `task6_mid_09_chapter_9.png` |
+| **X · Epilogue** | PASS | 21,910px | `task6_mid_10_chapter_10.png` |
+
+### 4. Interactive Feature & Mobile Verification
+- **Interactive Suite**: All 8 chapter interactions (Charter claim 3D open, gate lever, auction license buy, dial inflow/outflow, fee routing, bank run trigger, ghost report, receipt export) verified active and responsive.
+- **390px Mobile Viewport Pass**: Layout fully responsive without clipping or overflow issues (`task6_mobile_00_cover.png`, `task6_mobile_03_charter.png`, `task6_mobile_05_dial.png`).
+- **Console Errors**: 0 unhandled application errors.
+
+
