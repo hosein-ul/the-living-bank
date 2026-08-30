@@ -8,7 +8,7 @@ import { formatNumber, formatRate } from "../sim/formatters";
 import { CHAPTERS_CONTENT } from "@/content/chapters";
 import { sound } from "@/lib/sound";
 import { KineticText } from "../motion/KineticText";
-import { VelocitySkew } from "../motion/VelocitySkew";
+import { SplitChars } from "../motion/SplitChars";
 import { gsap, ScrollTrigger } from "@/lib/gsap";
 
 export const S4Furnace: React.FC = () => {
@@ -113,67 +113,71 @@ export const S4Furnace: React.FC = () => {
     <section
       id="chapter-4"
       ref={containerRef}
-      className="relative min-h-[260vh] border-t border-ink/10 bg-paper select-none"
+      className="relative min-h-[260vh] border-t border-gold/25 bg-paper select-none overflow-hidden"
     >
+      {/* Background warm light vignette */}
+      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-gold/5 via-transparent to-ink/5" />
+
       <div className="sticky top-0 h-screen w-full flex flex-col lg:flex-row items-center justify-between p-6 sm:p-12 lg:p-16 max-w-7xl mx-auto overflow-hidden">
-        {/* Copy Column (~42% desktop) with Velocity Skew */}
-        <div className="w-full lg:w-[42%] flex flex-col justify-center order-2 lg:order-1 mt-6 lg:mt-0 z-10">
-          <VelocitySkew maxSkew={1.5}>
-            <div className="mb-3 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-gold animate-live-dot" />
-              <KineticText
-                text={`CHAPTER ${content.numeral} · ${content.title}`}
-                as="span"
-                velocityReactive={true}
-                className="font-mono text-xs uppercase tracking-widest text-gold font-semibold"
-              />
-            </div>
+        {/* Copy Column (~40% desktop) - ZERO text skew */}
+        <div className="w-full lg:w-[40%] flex flex-col justify-center order-2 lg:order-1 mt-6 lg:mt-0 z-10">
+          <div className="mb-3 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-gold animate-live-dot" />
+            <span className="font-mono text-xs uppercase tracking-widest text-gold font-semibold">
+              CHAPTER {content.numeral} · {content.title}
+            </span>
+          </div>
 
-            <p className="font-serif text-lg sm:text-xl text-ink leading-relaxed max-w-[34ch] mb-4">
-              {content.copy}
-            </p>
+          <div className="mb-4">
+            <SplitChars
+              text={content.copy}
+              as="p"
+              triggerOnScroll={true}
+              stagger={0.015}
+              className="font-serif text-lg sm:text-2xl text-ink leading-relaxed max-w-[34ch]"
+            />
+          </div>
 
-            {/* Subtext that fades in after first buy */}
-            <AnimatePresence>
-              {hasBoughtOnce && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.42 }}
-                  className="p-3.5 bg-paper-deep border border-gold/40 rounded text-xs font-serif text-ink-60 italic mb-6 leading-relaxed shadow-sm"
-                >
-                  {content.subtext}
-                </motion.div>
-              )}
-            </AnimatePresence>
+          {/* Subtext that fades in after first buy */}
+          <AnimatePresence>
+            {hasBoughtOnce && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.42 }}
+                className="py-3 px-3.5 border-y border-gold/30 text-xs font-serif text-ink-60 italic mb-6 leading-relaxed bg-paper/50"
+              >
+                {content.subtext}
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-            {/* Gold Fraunces Italic Takeaway */}
-            <div className="border-l-2 border-gold pl-4 py-1">
-              <KineticText
-                text={`“${content.takeaway}”`}
-                as="p"
-                italicTakeaway={true}
-                delay={0.15}
-                className="font-serif italic text-gold text-sm sm:text-base tracking-wide"
-              />
-            </div>
-          </VelocitySkew>
+          {/* Gold Fraunces Italic Takeaway */}
+          <div className="border-l-2 border-gold pl-4 py-1 mb-6">
+            <KineticText
+              text={`“${content.takeaway}”`}
+              as="p"
+              italicTakeaway={true}
+              delay={0.15}
+              className="font-serif italic text-gold text-sm sm:text-base tracking-wide"
+            />
+          </div>
         </div>
 
-        {/* Stage (~56% desktop) */}
-        <div className="w-full lg:w-[56%] flex flex-col items-center justify-center bg-paper-deep/50 p-6 sm:p-8 rounded-lg border border-ink/15 shadow-[0_12px_32px_rgba(26,26,24,0.06)] order-1 lg:order-2">
-          {/* Top: 24h Expansion License Dutch Auction Rail & Exponential Curve */}
-          <div className="w-full mb-5 p-3.5 bg-paper rounded-lg border border-ink/15 shadow-sm">
-            <div className="flex justify-between items-center mb-1.5 font-mono text-[11px] sm:text-xs uppercase tracking-wider text-ink-60">
-              <span className="font-semibold">24h Dutch Auction Decay (Path Tracing)</span>
-              <span className="text-gold font-bold">
-                Price: {formatNumber(licensePrice)} $STANDARD
+        {/* Stage (~58% desktop): Full-Width Engraved Dutch Auction & Monumental Furnace */}
+        <div className="w-full lg:w-[58%] flex flex-col items-center justify-center order-1 lg:order-2">
+          {/* Top: 24h Expansion License Dutch Auction Rail & Exponential Curve Directly on Paper */}
+          <div className="w-full mb-6 py-4 border-y border-gold/30">
+            <div className="flex justify-between items-center mb-2 font-mono text-[11px] sm:text-xs uppercase tracking-wider text-ink-60">
+              <span className="font-bold text-ink tracking-widest">24H DUTCH AUCTION DECAY</span>
+              <span className="text-gold font-bold text-sm">
+                PRICE: {formatNumber(licensePrice)} $STANDARD
               </span>
             </div>
 
             {/* Scroll-Scrubbed Dutch Auction Exponential Decay Curve */}
-            <div className="relative w-full h-14 overflow-visible">
+            <div className="relative w-full h-16 overflow-visible my-1">
               <svg viewBox="0 0 400 60" className="w-full h-full overflow-visible">
                 {/* Background Ghost Path */}
                 <path
@@ -181,7 +185,7 @@ export const S4Furnace: React.FC = () => {
                   fill="none"
                   stroke="#b08d2e"
                   strokeWidth="1.5"
-                  strokeOpacity="0.2"
+                  strokeOpacity="0.25"
                 />
                 {/* Traced Active Path */}
                 <path
@@ -198,13 +202,13 @@ export const S4Furnace: React.FC = () => {
               <div
                 ref={markerRef}
                 style={{ left: "10px", top: "12px" }}
-                className="absolute -translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-gold border-2 border-[#8e6e22] shadow-md flex items-center justify-center pointer-events-none transition-all duration-75"
+                className="absolute -translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-gold border-2 border-ink shadow-md flex items-center justify-center pointer-events-none transition-all duration-75"
               >
                 <div className="w-1.5 h-1.5 rounded-full bg-paper" />
               </div>
             </div>
 
-            <div className="flex justify-between items-center font-mono text-[9.5px] text-ink-60 font-medium pt-1 border-t border-ink/10">
+            <div className="flex justify-between items-center font-mono text-[9.5px] text-ink-60 font-medium pt-1.5 border-t border-gold/20">
               <span>00:00 (Peak 2×)</span>
               <span>12:00 (Exponential Decay)</span>
               <span>24:00 (Floor Reserve)</span>
@@ -212,7 +216,7 @@ export const S4Furnace: React.FC = () => {
           </div>
 
           {/* Center: The Furnace with EMBER canvas */}
-          <div className="relative w-full flex flex-col items-center mb-5">
+          <div className="relative w-full flex flex-col items-center mb-4">
             <Furnace burnTrigger={burnTimestamp} />
 
             {/* Flying coin sprite on buy */}
@@ -240,52 +244,56 @@ export const S4Furnace: React.FC = () => {
             </AnimatePresence>
           </div>
 
-          {/* Current Branch Pips Status — FIX BUG 3: Render proper SVG/DOM pip rectangles instead of tofu Unicode boxes */}
+          {/* Current Branch Pips Status (Directly on Paper) */}
           <div
             ref={pipContainerRef}
-            className="w-full flex items-center justify-between py-3 px-4 bg-paper rounded border border-ink/15 mb-4 font-mono text-xs shadow-sm"
+            className="w-full flex items-center justify-between py-2.5 border-b border-gold/30 mb-5 font-mono text-xs"
           >
-            <span className="text-ink-60 uppercase text-[10px] font-semibold">Your Branches:</span>
+            <span className="text-ink-60 uppercase text-[10px] font-bold tracking-wider">YOUR BRANCHES:</span>
             <div className="flex items-center gap-1.5">
-              <div className="flex items-center gap-1">
-                {Array.from({ length: 10 }).map((_, i) => (
-                  <span
+              {Array.from({ length: 10 }).map((_, i) => {
+                const isOwned = i < branches;
+                return (
+                  <div
                     key={i}
-                    className={`branch-pip inline-block w-2.5 h-4 rounded-xs border transition-all duration-300 ${
-                      i < branches
-                        ? "bg-gold border-[#8e6e22] shadow-xs"
-                        : "bg-paper-deep border-ink/20"
+                    className={`pip-cell w-3.5 h-3.5 rounded-xs border transition-all duration-300 ${
+                      isOwned
+                        ? "bg-gold border-gold/80 shadow-xs scale-105"
+                        : "bg-paper/40 border-ink/20"
                     }`}
                   />
-                ))}
-              </div>
-              <span className="font-bold text-ink ml-1 tabular-nums">{branches}/10</span>
+                );
+              })}
+              <span className="ml-2 font-bold text-ink">{branches}/10</span>
+              <span className="text-[10px] text-green font-semibold ml-1">
+                (+{(branches * 0.08).toFixed(1)}/s)
+              </span>
             </div>
-            <span className="text-gold font-bold">({formatRate(accrualRate)})</span>
           </div>
 
-          {/* Buy Button */}
+          {/* Monumental Brass Plaque Buy Button */}
           <div className="w-full flex flex-col items-center">
             <button
               onClick={handleBuy}
               disabled={!canBuy}
               aria-label={content.button}
-              className={`w-full py-3.5 rounded font-mono text-xs sm:text-sm font-bold tracking-wider uppercase transition-all duration-240 cursor-pointer ${
-                canBuy
-                  ? "bg-gold hover:bg-gold-bright text-paper shadow-lg hover:shadow-xl active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-gold"
-                  : "bg-paper-deep text-ink-60 border border-ink/20 cursor-not-allowed"
+              className={`w-full py-4 rounded font-mono text-xs sm:text-sm uppercase tracking-widest font-bold transition-all duration-300 shadow-md border cursor-pointer ${
+                !canBuy
+                  ? "bg-paper-deep text-ink-60 border-ink/20 cursor-not-allowed"
+                  : "bg-gradient-to-b from-[#e6c374] via-[#c9a961] to-[#a38030] text-ink border-gold hover:shadow-lg active:scale-98"
               }`}
             >
               {isMaxBranches
                 ? "MAX CAPACITY (10/10 BRANCHES)"
                 : isDailyLimit
-                ? "DAILY LIMIT REACHED (3/3 TODAY)"
-                : `${content.button} (${formatNumber(licensePrice)} $STANDARD)`}
+                ? "DAILY LIMIT REACHED (3/3)"
+                : balance < licensePrice
+                ? `INSUFFICIENT $STANDARD (${formatNumber(licensePrice)} NEEDED)`
+                : `BUY LICENSE → +1 BRANCH (${formatNumber(licensePrice)} $STANDARD)`}
             </button>
-
-            <div className="flex justify-between w-full mt-2 font-mono text-[10px] text-ink-60">
+            <div className="flex justify-between w-full font-mono text-[10px] text-ink-60 mt-2 px-1">
               <span>Daily Bought: {licensesToday}/3</span>
-              <span className="text-gold font-semibold">100% permanently burned</span>
+              <span className="text-red font-semibold">100% permanently burned</span>
             </div>
           </div>
         </div>

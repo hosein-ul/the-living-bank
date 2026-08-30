@@ -23,13 +23,16 @@ export const Receipt: React.FC<ReceiptProps> = ({
       initial={{ scale: 0.9, opacity: 0, y: 12 }}
       animate={{ scale: 1, opacity: 1, y: 0 }}
       transition={{ duration: 0.42, ease: EASINGS.stamp }}
-      className={`p-4 sm:p-5 bg-[#fbf9f4] border border-dashed border-ink/30 rounded shadow-sm text-ink font-mono text-xs max-w-sm w-full select-none ${className}`}
+      className={`p-4 sm:p-5 bg-paper/90 border-2 border-gold/40 rounded-xs shadow-md text-ink font-mono text-xs max-w-sm w-full select-none relative ${className}`}
     >
-      <div className="text-center pb-2 border-b border-ink/15 mb-3">
-        <span className="font-mono text-[9px] uppercase tracking-widest text-ink-60 block">
+      {/* Engraved inner hairline */}
+      <div className="absolute inset-1 border border-gold/20 pointer-events-none" />
+
+      <div className="text-center pb-2 border-b border-gold/30 mb-3">
+        <span className="font-mono text-[9px] uppercase tracking-widest text-ink-60 block font-semibold">
           OFFICIAL SETTLEMENT
         </span>
-        <span className="font-serif font-bold text-sm tracking-tight block mt-0.5">
+        <span className="font-serif font-bold text-sm tracking-tight block mt-0.5 text-ink">
           {title}
         </span>
       </div>

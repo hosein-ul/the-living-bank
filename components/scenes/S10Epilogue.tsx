@@ -9,6 +9,7 @@ import { formatNumber } from "../sim/formatters";
 import { CHAPTERS_CONTENT } from "@/content/chapters";
 import { sound } from "@/lib/sound";
 import { KineticText } from "../motion/KineticText";
+import { SplitChars } from "../motion/SplitChars";
 import { gsap, ScrollTrigger } from "@/lib/gsap";
 
 export const S10Epilogue: React.FC = () => {
@@ -252,21 +253,49 @@ export const S10Epilogue: React.FC = () => {
     <section
       id="chapter-10"
       ref={containerRef}
-      className="relative min-h-screen py-24 px-6 sm:px-12 lg:px-16 border-t border-ink/10 flex flex-col items-center justify-center bg-paper text-center select-none"
+      className="relative min-h-screen py-24 px-6 sm:px-12 lg:px-16 border-t border-gold/25 flex flex-col items-center justify-center bg-paper text-center select-none overflow-hidden"
     >
-      <div className="w-full max-w-4xl mx-auto flex flex-col items-center">
+      {/* Background warm light vignette */}
+      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-gold/10 via-transparent to-ink/5" />
+
+      {/* Grand Framed Certificate Composition Directly on Paper */}
+      <div className="w-full max-w-3xl mx-auto flex flex-col items-center relative p-8 sm:p-14 border-2 border-gold/50 shadow-2xl bg-[#faf7f0]">
+        {/* Inner Guilloche Border */}
+        <div className="absolute inset-2 sm:inset-3 border border-gold/30 pointer-events-none" />
+
+        {/* 4 Engraved Corner Flourishes */}
+        <svg className="absolute top-4 left-4 w-7 h-7 text-gold/60 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <path d="M 2 12 L 2 2 L 12 2" />
+          <circle cx="6" cy="6" r="2" fill="currentColor" />
+        </svg>
+        <svg className="absolute top-4 right-4 w-7 h-7 text-gold/60 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <path d="M 22 12 L 22 2 L 12 2" />
+          <circle cx="18" cy="6" r="2" fill="currentColor" />
+        </svg>
+        <svg className="absolute bottom-4 left-4 w-7 h-7 text-gold/60 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <path d="M 2 12 L 2 22 L 12 22" />
+          <circle cx="6" cy="18" r="2" fill="currentColor" />
+        </svg>
+        <svg className="absolute bottom-4 right-4 w-7 h-7 text-gold/60 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <path d="M 22 12 L 22 22 L 12 22" />
+          <circle cx="18" cy="18" r="2" fill="currentColor" />
+        </svg>
+
         {/* Seal Stamp with GSAP STAMP Trigger */}
         <div ref={sealRef} className="mb-6 inline-block will-change-transform">
           <WaxSeal text="EXPERIENCED" subtext="RESERVE" size={96} animateStamp={false} />
         </div>
 
-        {/* Title with Word-Masked Kinetic Typography */}
-        <KineticText
-          text={content.title}
-          as="h2"
-          velocityReactive={true}
-          className="font-serif text-3xl sm:text-5xl font-semibold tracking-tight text-ink mb-4 justify-center"
-        />
+        {/* Title with SplitChars per-character rise */}
+        <div className="mb-4">
+          <SplitChars
+            text={content.title}
+            as="h2"
+            triggerOnScroll={true}
+            stagger={0.03}
+            className="font-serif text-3xl sm:text-5xl font-semibold tracking-tight text-ink justify-center"
+          />
+        </div>
 
         {/* Copy (Verbatim) */}
         <p className="font-serif text-base sm:text-xl text-ink leading-relaxed max-w-[34ch] mx-auto mb-8">
@@ -299,30 +328,42 @@ export const S10Epilogue: React.FC = () => {
           />
         </div>
 
-        {/* Export Button */}
-        <div className="mb-12">
+        {/* Official Signature Line */}
+        <div className="w-full max-w-xs flex flex-col items-center mb-8">
+          <div className="w-full border-b border-gold/40 mb-1 font-serif italic text-gold text-sm tracking-wider">
+            Standard Reserve Protocol
+          </div>
+          <span className="font-mono text-[9px] uppercase tracking-widest text-ink-60 font-semibold">
+            OFFICIAL PROTOCOL SIGNATURE
+          </span>
+        </div>
+
+        {/* Monumental Brass Plaque Export Button */}
+        <div className="mb-8 w-full max-w-sm">
           <button
             onClick={handleExportShareCard}
             disabled={exporting}
             aria-label={content.button}
-            className="px-8 py-3.5 bg-gold hover:bg-gold-bright text-paper rounded font-mono text-xs sm:text-sm font-bold tracking-widest uppercase shadow-lg hover:shadow-xl transition-transform active:scale-95 cursor-pointer focus-visible:ring-2 focus-visible:ring-gold"
+            className="w-full py-4 bg-gradient-to-b from-[#e6c374] via-[#c9a961] to-[#a38030] text-ink border border-gold rounded font-mono text-xs sm:text-sm font-bold tracking-widest uppercase shadow-lg hover:shadow-xl transition-all active:scale-95 cursor-pointer"
           >
             {exporting ? "GENERATING CARD..." : `📥 ${content.button}`}
           </button>
         </div>
 
-        {/* Three Quiet Links */}
-        <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-8 mb-12 font-mono text-xs text-ink uppercase tracking-wider font-semibold">
-          {content.links.map((link) => (
-            <a
-              key={link.label}
-              href={link.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-gold transition-colors focus-visible:outline-gold"
-            >
-              {link.label}
-            </a>
+        {/* Three Quiet Links with Gold Separators */}
+        <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 mb-6 font-mono text-xs text-ink uppercase tracking-wider font-semibold">
+          {content.links.map((link, idx) => (
+            <React.Fragment key={link.label}>
+              {idx > 0 && <span className="text-gold">·</span>}
+              <a
+                href={link.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-gold transition-colors focus-visible:outline-gold"
+              >
+                {link.label}
+              </a>
+            </React.Fragment>
           ))}
         </div>
 

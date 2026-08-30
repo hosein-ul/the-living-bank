@@ -5,7 +5,7 @@ import { useSim } from "../sim/SimProvider";
 import { CHAPTERS_CONTENT } from "@/content/chapters";
 import { sound } from "@/lib/sound";
 import { KineticText } from "../motion/KineticText";
-import { VelocitySkew } from "../motion/VelocitySkew";
+import { SplitChars } from "../motion/SplitChars";
 import { useLenisScroll } from "../chrome/SmoothScroll";
 import { gsap, ScrollTrigger } from "@/lib/gsap";
 
@@ -387,98 +387,102 @@ export const S2Gate: React.FC = () => {
     <section
       id="chapter-2"
       ref={containerRef}
-      className={`relative min-h-[260vh] border-t border-ink/10 select-none transition-colors duration-500 ${
+      className={`relative min-h-[260vh] border-t border-gold/25 select-none transition-colors duration-700 overflow-hidden ${
         leverValue > 0.1 ? "bg-[#f2f4ec]" : leverValue < -0.1 ? "bg-[#f5ecea]" : "bg-paper"
       }`}
     >
+      {/* Background warm light vignette */}
+      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-gold/5 via-transparent to-ink/5" />
+
       <div className="sticky top-0 h-screen w-full flex flex-col lg:flex-row items-center justify-between p-6 sm:p-12 lg:p-16 max-w-7xl mx-auto overflow-hidden">
-        {/* Copy Column (~42% desktop) with Velocity Skew */}
-        <div className="w-full lg:w-[42%] z-10 flex flex-col justify-center order-2 lg:order-1 mt-6 lg:mt-0">
-          <VelocitySkew maxSkew={1.5}>
-            <div className="mb-3 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-gold animate-live-dot" />
-              <KineticText
-                text={`CHAPTER ${content.numeral} · ${content.title}`}
-                as="span"
-                velocityReactive={true}
-                className="font-mono text-xs uppercase tracking-widest text-gold font-semibold"
-              />
-            </div>
+        {/* Copy Column (~40% desktop) - Sits directly on paper */}
+        <div className="w-full lg:w-[40%] z-10 flex flex-col justify-center order-2 lg:order-1 mt-6 lg:mt-0">
+          <div className="mb-3 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-gold animate-live-dot" />
+            <span className="font-mono text-xs uppercase tracking-widest text-gold font-semibold">
+              CHAPTER {content.numeral} · {content.title}
+            </span>
+          </div>
 
-            <p className="font-serif text-lg sm:text-xl text-ink leading-relaxed max-w-[34ch] mb-6">
-              {content.copy}
-            </p>
+          <div className="mb-6">
+            <SplitChars
+              text={content.copy}
+              as="p"
+              triggerOnScroll={true}
+              stagger={0.015}
+              className="font-serif text-lg sm:text-2xl text-ink leading-relaxed max-w-[34ch]"
+            />
+          </div>
 
-            {/* Odometer readout card for Net ETH Flow */}
-            <div className="p-5 rounded bg-paper-deep border border-ink/15 mb-4 flex items-center justify-between shadow-sm">
-              <div>
-                <span className="font-mono text-[10px] text-ink-60 uppercase tracking-widest block mb-1">
-                  POLICY INPUT · NET ETH FLOW
-                </span>
-                <div className="flex items-center gap-2">
-                  <span
-                    className={`font-mono text-xl sm:text-2xl font-bold tabular-nums ${
-                      leverValue > 0.05
-                        ? "text-green"
-                        : leverValue < -0.05
-                        ? "text-red"
-                        : "text-gold"
-                    }`}
-                  >
-                    {leverValue > 0 ? "+" : ""}
-                    {(leverValue * 100).toFixed(0)}%
-                  </span>
-                  <span className="font-mono text-xs text-ink-60 uppercase">
-                    ({leverValue > 0.05 ? "EXPANSION" : leverValue < -0.05 ? "CONTRACTION" : "NEUTRAL"})
-                  </span>
-                </div>
-              </div>
-              <div className="text-right">
-                <span className="font-mono text-[10px] text-ink-60 uppercase tracking-widest block mb-1">
-                  CUMULATIVE NET
-                </span>
+          {/* Engraved Policy Status & Odometer (Directly on paper with hairline rules) */}
+          <div className="py-4 my-4 border-y border-gold/30 flex items-center justify-between">
+            <div>
+              <span className="font-mono text-[10px] text-ink-60 uppercase tracking-widest block mb-1">
+                POLICY INPUT · NET ETH FLOW
+              </span>
+              <div className="flex items-center gap-2">
                 <span
-                  ref={counterRef}
-                  className="text-lg font-mono font-semibold text-ink tabular-nums"
+                  className={`font-mono text-2xl sm:text-3xl font-bold tabular-nums ${
+                    leverValue > 0.05
+                      ? "text-green"
+                      : leverValue < -0.05
+                      ? "text-red"
+                      : "text-gold"
+                  }`}
                 >
-                  +1,420 NET ETH
+                  {leverValue > 0 ? "+" : ""}
+                  {(leverValue * 100).toFixed(0)}%
+                </span>
+                <span className="font-mono text-[11px] text-ink-60 uppercase tracking-wider">
+                  ({leverValue > 0.05 ? "EXPANSION" : leverValue < -0.05 ? "CONTRACTION" : "NEUTRAL"})
                 </span>
               </div>
             </div>
-
-            {/* Gold Fraunces Italic Takeaway */}
-            <div className="border-l-2 border-gold pl-4 py-1 mt-2">
-              <KineticText
-                text={`“${content.takeaway}”`}
-                as="p"
-                italicTakeaway={true}
-                delay={0.15}
-                className="font-serif italic text-gold text-sm sm:text-base tracking-wide"
-              />
+            <div className="text-right">
+              <span className="font-mono text-[10px] text-ink-60 uppercase tracking-widest block mb-1">
+                CUMULATIVE NET
+              </span>
+              <span
+                ref={counterRef}
+                className="text-xl sm:text-2xl font-mono font-bold text-ink tabular-nums"
+              >
+                +1,420 NET ETH
+              </span>
             </div>
-          </VelocitySkew>
+          </div>
+
+          {/* Gold Fraunces Italic Takeaway */}
+          <div className="border-l-2 border-gold pl-4 py-1 mt-2">
+            <KineticText
+              text={`“${content.takeaway}”`}
+              as="p"
+              italicTakeaway={true}
+              delay={0.15}
+              className="font-serif italic text-gold text-sm sm:text-base tracking-wide"
+            />
+          </div>
         </div>
 
-        {/* Interactive Gate & Lever Arena (~55% desktop) */}
-        <div className="w-full lg:w-[55%] h-[420px] sm:h-[480px] lg:h-[540px] relative order-1 lg:order-2 flex flex-col items-center justify-between p-4 rounded border border-ink/10 bg-paper-deep/30 shadow-inner overflow-hidden">
-          {/* Canvas Crowd & Coin Flow Simulation */}
-          <div className="relative w-full h-[68%] rounded border border-ink/10 bg-paper overflow-hidden">
+        {/* Monumental Gate & Walking Coins Stage (~58% desktop) - ZERO grey boxes */}
+        <div className="w-full lg:w-[58%] h-[460px] sm:h-[520px] lg:h-[580px] relative order-1 lg:order-2 flex flex-col items-center justify-between">
+          {/* Canvas Coin Flow Stage directly on paper */}
+          <div className="relative w-full h-[72%] overflow-visible">
             <canvas ref={canvasRef} className="w-full h-full" />
 
-            <div className="absolute top-3 left-4 font-mono text-[11px] text-green tracking-wider uppercase font-semibold flex items-center gap-1.5">
+            <div className="absolute top-2 left-2 font-mono text-[11px] text-green tracking-widest uppercase font-semibold flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-green animate-pulse" />
               BUYS (ETH IN) →
             </div>
-            <div className="absolute top-3 right-4 font-mono text-[11px] text-red tracking-wider uppercase font-semibold flex items-center gap-1.5">
+            <div className="absolute top-2 right-2 font-mono text-[11px] text-red tracking-widest uppercase font-semibold flex items-center gap-1.5">
               ← SELLS (ETH OUT)
               <span className="w-2 h-2 rounded-full bg-red animate-pulse" />
             </div>
-            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 font-mono text-[10px] text-ink-60 uppercase tracking-widest px-3 py-1 bg-paper-deep/80 border border-ink/10 rounded">
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 font-mono text-[10px] text-ink-60 uppercase tracking-widest border-b border-gold/30 pb-0.5">
               UNISWAP V4 HOOKED POOL
             </div>
           </div>
 
-          {/* Physical Brass Lever Slider — FIX BUG 2: Label cleanly above track with ample margin */}
+          {/* Monumental Brass Control Lever (Directly on paper with engraved hairline track) */}
           <div
             tabIndex={0}
             role="slider"
@@ -490,39 +494,39 @@ export const S2Gate: React.FC = () => {
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
-            className="w-full h-[28%] mt-2 px-6 py-3 bg-paper-deep border border-ink/15 rounded flex flex-col justify-center cursor-ew-resize relative group focus-visible:outline-gold select-none"
+            className="w-full h-[24%] px-4 flex flex-col justify-center cursor-ew-resize relative group focus-visible:outline-gold select-none"
           >
-            {/* Top Label Header (Positioned clearly above track to prevent handle overlap) */}
+            {/* Top Label Header */}
             <div className="flex justify-between items-center text-[10px] font-mono text-ink-60 mb-2 pointer-events-none">
-              <span className="text-red font-semibold">← OUTFLOW (-1.0)</span>
-              <span className="text-ink font-bold tracking-wider bg-paper/70 px-2 py-0.5 rounded border border-ink/10">
+              <span className="text-red font-bold tracking-wider">← OUTFLOW (-1.0)</span>
+              <span className="text-gold font-bold tracking-widest uppercase border-b border-gold/40">
                 DRAG THE LEVER
               </span>
-              <span className="text-green font-semibold">INFLOW (+1.0) →</span>
+              <span className="text-green font-bold tracking-wider">INFLOW (+1.0) →</span>
             </div>
 
-            {/* Lever Track Container */}
-            <div className="lever-track-container relative w-full h-4 bg-paper border border-ink/25 rounded-full overflow-visible">
-              {/* Colored Fill */}
+            {/* Engraved Track */}
+            <div className="lever-track-container relative w-full h-3.5 bg-paper-deep/60 border border-gold/40 rounded-full overflow-visible shadow-inner">
+              {/* Colored Flow Fill */}
               <div
                 ref={fillRef}
-                className="absolute top-0 bottom-0 bg-green transition-colors duration-200 rounded-full"
+                className="absolute top-0 bottom-0 bg-green/80 transition-colors duration-200 rounded-full"
                 style={{
                   left: "50%",
                   width: `${leverValue * 50}%`,
                 }}
               />
-              <div className="absolute left-1/2 top-0 bottom-0 w-[1.5px] bg-ink/40" />
+              <div className="absolute left-1/2 top-0 bottom-0 w-[1.5px] bg-gold" />
 
-              {/* Brass Handle */}
+              {/* Monumental Brass Handle */}
               <div
                 ref={handleRef}
-                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-7 h-9 bg-gradient-to-b from-gold-bright via-gold to-gold/90 border-2 border-ink/60 rounded shadow-lg pointer-events-none flex items-center justify-center will-change-transform z-10"
+                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-8 h-10 bg-gradient-to-b from-[#e6c374] via-[#c9a961] to-[#a38030] border-2 border-ink/80 rounded shadow-md pointer-events-none flex items-center justify-center will-change-transform z-10"
                 style={{
                   left: `${((leverValue + 1) / 2) * 100}%`,
                 }}
               >
-                <div className="w-[2px] h-4 bg-ink/40" />
+                <div className="w-[2px] h-5 bg-ink/50" />
               </div>
             </div>
           </div>

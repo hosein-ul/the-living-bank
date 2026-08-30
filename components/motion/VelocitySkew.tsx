@@ -7,13 +7,13 @@ import { useLenisScroll } from "@/components/chrome/SmoothScroll";
 interface VelocitySkewProps {
   children: React.ReactNode;
   className?: string;
-  maxSkew?: number; // degrees, default 1.5
+  maxSkew?: number; // degrees, capped at 0.3 max for subtle graphic panels only
 }
 
 export const VelocitySkew: React.FC<VelocitySkewProps> = ({
   children,
   className = "",
-  maxSkew = 1.5,
+  maxSkew = 0.3,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const { velocity } = useLenisScroll();
@@ -33,10 +33,12 @@ export const VelocitySkew: React.FC<VelocitySkewProps> = ({
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
     if (mediaQuery.matches) return;
 
-    // Calculate clamped skew based on scroll velocity
-    const targetSkew = Math.max(-maxSkew, Math.min(maxSkew, velocity * 0.08));
+    // Only apply for significant velocity, strictly capped at 0.3 deg
+    if (Math.abs(velocity) < 15) return;
+    const clampedMax = Math.min(0.35, maxSkew);
+    const targetSkew = Math.max(-clampedMax, Math.min(clampedMax, velocity * 0.005));
 
-    if (Math.abs(targetSkew) > 0.02) {
+    if (Math.abs(targetSkew) > 0.05) {
       proxyRef.current.skew = targetSkew;
       gsap.to(proxyRef.current, {
         skew: 0,

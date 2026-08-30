@@ -7,7 +7,7 @@ import { CHAPTERS_CONTENT } from "@/content/chapters";
 import { EASINGS } from "@/lib/easings";
 import { sound } from "@/lib/sound";
 import { KineticText } from "../motion/KineticText";
-import { VelocitySkew } from "../motion/VelocitySkew";
+import { SplitChars } from "../motion/SplitChars";
 
 const DynamicThreeIsland = dynamic(() => import("./ThreeIsland"), {
   ssr: false,
@@ -37,52 +37,63 @@ export const S1Island: React.FC = () => {
     <section
       id="chapter-1"
       ref={containerRef}
-      className="relative min-h-[280vh] border-t border-ink/10 bg-paper"
+      className="relative min-h-[280vh] border-t border-gold/25 bg-paper select-none overflow-hidden"
     >
-      <div className="sticky top-0 h-screen w-full flex flex-col lg:flex-row items-center justify-between p-6 sm:p-12 lg:p-16 max-w-7xl mx-auto overflow-hidden">
-        {/* Copy Column (~42% desktop) with Velocity Skew */}
-        <div className="w-full lg:w-[42%] z-10 flex flex-col justify-center order-2 lg:order-1 mt-4 lg:mt-0">
-          <VelocitySkew maxSkew={1.5}>
-            <div className="mb-3 flex items-center gap-2">
+      {/* Background radial warm sun glow & ink vignette */}
+      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-gold/5 via-transparent to-ink/5" />
+
+      <div className="sticky top-0 h-screen w-full flex items-center justify-between overflow-hidden">
+        {/* Full-bleed 3D Bank Scene */}
+        <div className="absolute inset-0 w-full h-full z-0 flex items-center justify-center">
+          <DynamicThreeIsland
+            sectionTriggerId="chapter-1"
+            onActiveIndexChange={(newIdx) => setActiveIdx(newIdx)}
+            className="w-full h-full"
+          />
+        </div>
+
+        {/* Copy Column floating over left with subtle paper gradient mask */}
+        <div className="relative z-10 w-full max-w-xl lg:max-w-md xl:max-w-lg h-full flex flex-col justify-center px-6 sm:px-12 lg:px-16 pointer-events-none">
+          <div className="pointer-events-auto max-w-md">
+            {/* Chapter numeral with live indicator */}
+            <div className="mb-4 flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-gold animate-live-dot" />
-              <KineticText
-                text={`CHAPTER ${content.numeral} · ${content.title}`}
-                as="span"
-                velocityReactive={true}
-                className="font-mono text-xs uppercase tracking-widest text-gold font-semibold"
+              <span className="font-mono text-xs uppercase tracking-widest text-gold font-semibold">
+                CHAPTER {content.numeral} · {content.title}
+              </span>
+            </div>
+
+            {/* Verbatim Copy with Per-Char Rise */}
+            <div className="mb-6">
+              <SplitChars
+                text={content.copy}
+                as="p"
+                triggerOnScroll={true}
+                stagger={0.015}
+                className="font-serif text-lg sm:text-2xl text-ink leading-relaxed"
               />
             </div>
 
-            <p className="font-serif text-lg sm:text-xl text-ink leading-relaxed max-w-[34ch] mb-6">
-              {content.copy}
-            </p>
-
-            {/* Active Structure Gloss Box with STAMP-in transition */}
-            <div className="relative p-5 rounded bg-paper-deep border border-ink/15 mb-6 min-h-[120px] flex flex-col justify-center transition-all duration-300 shadow-sm overflow-hidden">
-              <div className="absolute top-0 left-0 right-0 h-[3px] bg-ink/10 rounded-t overflow-hidden">
-                <div
-                  className="h-full bg-gradient-to-r from-gold to-gold-bright transition-all duration-300"
-                  style={{ width: `${((activeIdx + 1) / 6) * 100}%` }}
-                />
+            {/* Active Structure Gloss with Engraved Gold Hairlines (No Grey Box) */}
+            <div className="relative py-4 my-6 border-y border-gold/30">
+              <div className="flex items-center justify-between mb-2">
+                <span className="font-mono text-xs uppercase tracking-widest font-bold text-gold flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-gold" />
+                  {currentGloss.label}
+                </span>
+                <span className="font-mono text-[10px] text-ink-60 tracking-widest">
+                  0{activeIdx + 1} / 06
+                </span>
               </div>
 
               <AnimatePresence mode="wait">
                 <motion.div
                   key={currentGloss.label}
-                  initial={{ opacity: 0, scale: 0.96, y: 6 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.96, y: -6 }}
-                  transition={{ duration: 0.28, ease: EASINGS.stamp }}
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.24, ease: EASINGS.stamp }}
                 >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-mono text-xs uppercase tracking-wider font-semibold text-gold flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-gold" />
-                      {currentGloss.label}
-                    </span>
-                    <span className="font-mono text-[10px] text-ink-60 tracking-wider">
-                      {activeIdx + 1} / 6
-                    </span>
-                  </div>
                   <p className="font-serif text-sm sm:text-base text-ink leading-relaxed">
                     {currentGloss.gloss}
                   </p>
@@ -91,7 +102,7 @@ export const S1Island: React.FC = () => {
             </div>
 
             {/* Gold Fraunces Italic Takeaway */}
-            <div className="border-l-2 border-gold pl-4 py-1">
+            <div className="border-l-2 border-gold pl-4 py-1 mb-6">
               <KineticText
                 text={`“${content.takeaway}”`}
                 as="p"
@@ -101,32 +112,24 @@ export const S1Island: React.FC = () => {
               />
             </div>
 
-            {/* Interactive Gloss navigation pills */}
-            <div className="flex flex-wrap gap-1.5 mt-5">
+            {/* Engraved Architectural Feature Selectors */}
+            <div className="flex flex-wrap gap-2 pt-1">
               {content.glosses.map((item, idx) => (
                 <button
                   key={item.label}
                   onClick={() => handlePillClick(idx)}
                   aria-label={`Inspect ${item.label}`}
-                  className={`px-2.5 py-1 text-[11px] font-mono rounded border transition-all duration-200 cursor-pointer ${
+                  className={`px-2.5 py-1 text-[10px] sm:text-[11px] font-mono tracking-wider uppercase transition-all duration-200 cursor-pointer border ${
                     activeIdx === idx
-                      ? "bg-gold text-paper border-gold shadow-xs font-semibold scale-105"
-                      : "bg-paper-deep/60 text-ink-60 border-ink/10 hover:border-gold/50 hover:text-ink"
+                      ? "border-gold bg-gold text-paper font-bold shadow-xs scale-105"
+                      : "border-ink/15 text-ink-60 hover:border-gold hover:text-ink bg-paper/70 backdrop-blur-xs"
                   }`}
                 >
                   {item.label}
                 </button>
               ))}
             </div>
-          </VelocitySkew>
-        </div>
-
-        {/* 3D Scene Viewport (~55% desktop) */}
-        <div className="w-full lg:w-[55%] h-[400px] sm:h-[480px] lg:h-[560px] relative order-1 lg:order-2 flex items-center justify-center rounded border border-ink/10 bg-paper-deep/30 shadow-inner overflow-hidden">
-          <DynamicThreeIsland
-            sectionTriggerId="chapter-1"
-            onActiveIndexChange={(newIdx) => setActiveIdx(newIdx)}
-          />
+          </div>
         </div>
       </div>
     </section>

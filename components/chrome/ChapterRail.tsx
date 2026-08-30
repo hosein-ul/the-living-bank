@@ -51,7 +51,7 @@ export const ChapterRail: React.FC = () => {
   return (
     <nav
       aria-label="Chapter navigation rail"
-      className="fixed right-3 sm:right-6 top-1/2 -translate-y-1/2 z-40 hidden md:flex flex-col items-center gap-3 py-4 px-2 bg-paper-deep/60 backdrop-blur-none border border-ink/10 rounded-full"
+      className="fixed right-3 sm:right-6 top-1/2 -translate-y-1/2 z-40 hidden md:flex flex-col items-center gap-2.5 py-4 px-2 border-r border-gold/30"
     >
       {RAIL_CHAPTERS.map((ch) => {
         const isActive = activeChapter === ch.id;
@@ -63,14 +63,25 @@ export const ChapterRail: React.FC = () => {
             onClick={() => handleNavClick(ch.id)}
             title={`${ch.numeral}: ${ch.label}`}
             aria-label={`Go to Chapter ${ch.numeral} — ${ch.label}`}
-            className="group relative flex items-center justify-center w-6 h-6 rounded-full transition-colors focus-visible:ring-1 focus-visible:ring-gold"
+            className="group relative flex items-center justify-end w-8 h-5 transition-transform focus-visible:ring-1 focus-visible:ring-gold"
           >
+            {/* Tick Mark */}
             <span
-              className={`font-mono text-[10px] tabular-nums transition-colors duration-240 ${
+              className={`inline-block h-[1px] transition-all duration-200 ${
+                isActive
+                  ? "w-4 bg-gold shadow-xs"
+                  : isVisited
+                  ? "w-2.5 bg-ink/50"
+                  : "w-1.5 bg-ink/20"
+              }`}
+            />
+
+            <span
+              className={`font-mono text-[9px] tabular-nums ml-1.5 transition-colors duration-240 ${
                 isActive
                   ? "text-gold font-bold scale-110"
                   : isVisited
-                  ? "text-ink font-medium"
+                  ? "text-ink font-semibold"
                   : "text-ink-60"
               }`}
             >
@@ -80,7 +91,7 @@ export const ChapterRail: React.FC = () => {
             {isActive && (
               <span
                 aria-hidden="true"
-                className="absolute -left-2 w-1.5 h-1.5 rounded-full bg-gold animate-live-dot"
+                className="absolute -left-1.5 w-1 h-1 rounded-full bg-gold animate-live-dot"
               />
             )}
           </button>

@@ -35,10 +35,10 @@ export const SplitChars: React.FC<SplitCharsProps> = ({
         gsap.fromTo(
           chars,
           {
-            y: 45,
+            y: 60,
             opacity: 0,
-            filter: "blur(8px)",
-            rotateX: 30,
+            filter: "blur(12px)",
+            rotateX: 45,
           },
           {
             y: 0,
@@ -46,11 +46,11 @@ export const SplitChars: React.FC<SplitCharsProps> = ({
             filter: "blur(0px)",
             rotateX: 0,
             stagger,
-            ease: "power2.out",
+            ease: "power3.out",
             scrollTrigger: {
               trigger: el,
-              start: "top 85%",
-              end: "top 45%",
+              start: "top 88%",
+              end: "top 40%",
               scrub: 0.6,
             },
           }
@@ -59,10 +59,10 @@ export const SplitChars: React.FC<SplitCharsProps> = ({
         gsap.fromTo(
           chars,
           {
-            y: 50,
+            y: 65,
             opacity: 0,
-            filter: "blur(10px)",
-            rotateX: 40,
+            filter: "blur(14px)",
+            rotateX: 50,
           },
           {
             y: 0,
@@ -70,8 +70,8 @@ export const SplitChars: React.FC<SplitCharsProps> = ({
             filter: "blur(0px)",
             rotateX: 0,
             stagger,
-            duration: 0.9,
-            delay: 0.15,
+            duration: 0.95,
+            delay: 0.1,
             ease: "power3.out",
           }
         );

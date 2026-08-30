@@ -24,9 +24,9 @@ export const TollGate: React.FC<TollGateProps> = ({
   const currentY = height - (feePercent / 0.25) * (height - 20);
 
   return (
-    <div className={`p-3 bg-paper rounded border border-ink/15 shadow-sm flex flex-col items-center select-none ${className}`}>
+    <div className={`flex flex-col items-center select-none ${className}`}>
       <div className="flex justify-between items-center w-full font-mono text-[9px] uppercase tracking-wider text-ink-60 mb-1">
-        <span>Resolution Fee Curve</span>
+        <span>RESOLUTION FEE CURVE</span>
         <span className="text-red font-bold">{formatPercent(feePercent)}</span>
       </div>
 

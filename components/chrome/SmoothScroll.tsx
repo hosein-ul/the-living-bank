@@ -1,11 +1,10 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, useRef, useCallback } from "react";
-import Lenis from "lenis";
-import { gsap, ScrollTrigger } from "@/lib/gsap";
+import { gsap, ScrollTrigger, ScrollSmoother } from "@/lib/gsap";
 
 export interface ScrollContextValue {
-  lenis: Lenis | null;
+  smoother: ScrollSmoother | null;
   scrollY: number;
   velocity: number;
   direction: number;
@@ -13,18 +12,16 @@ export interface ScrollContextValue {
   scrollTo: (
     target: string | HTMLElement | number,
     options?: {
+      smooth?: boolean;
+      position?: string;
       offset?: number;
       duration?: number;
-      immediate?: boolean;
-      lock?: boolean;
-      easing?: (t: number) => number;
-      onComplete?: () => void;
     }
   ) => void;
 }
 
 const defaultContextValue: ScrollContextValue = {
-  lenis: null,
+  smoother: null,
   scrollY: 0,
   velocity: 0,
   direction: 0,
@@ -34,10 +31,11 @@ const defaultContextValue: ScrollContextValue = {
 
 const ScrollContext = createContext<ScrollContextValue>(defaultContextValue);
 
-// Singleton reference accessible outside React lifecycle if needed
-let globalLenis: Lenis | null = null;
-export const getLenis = () => globalLenis;
+let globalSmoother: ScrollSmoother | null = null;
+export const getSmoother = () => globalSmoother;
 
+export const useSmoothScroll = () => useContext(ScrollContext);
+// Backwards compatibility alias
 export const useLenisScroll = () => useContext(ScrollContext);
 
 export interface SmoothScrollProps {
@@ -45,58 +43,51 @@ export interface SmoothScrollProps {
 }
 
 export const SmoothScroll: React.FC<SmoothScrollProps> = ({ children }) => {
-  const [lenisInstance, setLenisInstance] = useState<Lenis | null>(null);
+  const [smootherInstance, setSmootherInstance] = useState<ScrollSmoother | null>(null);
   const [scrollY, setScrollY] = useState<number>(0);
   const [velocity, setVelocity] = useState<number>(0);
   const [direction, setDirection] = useState<number>(0);
   const [progress, setProgress] = useState<number>(0);
 
-  const lenisRef = useRef<Lenis | null>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Check prefers-reduced-motion
-    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
-    if (mediaQuery.matches) {
-      return;
-    }
+    if (typeof window === "undefined") return;
 
-    const lenis = new Lenis({
-      lerp: 0.08,
-      duration: 1.2,
-      smoothWheel: true,
-      wheelMultiplier: 1.0,
-      touchMultiplier: 1.5,
-      autoResize: true,
+    const isReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    // Create GSAP ScrollSmoother instance per official GSAP documentation
+    const smoother = ScrollSmoother.create({
+      wrapper: wrapperRef.current || "#smooth-wrapper",
+      content: contentRef.current || "#smooth-content",
+      smooth: isReduced ? 0 : 1.2,
+      effects: true,
+      smoothTouch: 0.1,
+      normalizeScroll: false,
     });
 
-    lenisRef.current = lenis;
-    globalLenis = lenis;
-    setLenisInstance(lenis);
+    globalSmoother = smoother;
+    setSmootherInstance(smoother);
 
-    // 1. Synchronize Lenis scroll event with ScrollTrigger update
-    lenis.on("scroll", (e: { scroll: number; velocity: number; direction: number; progress: number }) => {
-      setScrollY(e.scroll);
-      setVelocity(e.velocity);
-      setDirection(e.direction);
-      setProgress(e.progress);
-      ScrollTrigger.update();
+    // Global ScrollTrigger listener for velocity, scroll position, and direction tracking
+    const rootTrigger = ScrollTrigger.create({
+      onUpdate: (self) => {
+        setScrollY(self.scroll());
+        setVelocity(self.getVelocity());
+        setDirection(self.direction);
+        setProgress(self.progress);
+      },
     });
 
-    // 2. Drive Lenis RAF loop through GSAP ticker for perfect sync
-    const tickerCallback = (time: number) => {
-      lenis.raf(time * 1000);
-    };
-    gsap.ticker.add(tickerCallback);
-
-    // 3. Disable GSAP lag smoothing to prevent visual desynchronization
-    gsap.ticker.lagSmoothing(0);
+    // Refresh ScrollTrigger once smoother is initialized
+    ScrollTrigger.refresh();
 
     return () => {
-      gsap.ticker.remove(tickerCallback);
-      lenis.destroy();
-      lenisRef.current = null;
-      globalLenis = null;
-      setLenisInstance(null);
+      rootTrigger.kill();
+      smoother.kill();
+      globalSmoother = null;
+      setSmootherInstance(null);
     };
   }, []);
 
@@ -104,26 +95,24 @@ export const SmoothScroll: React.FC<SmoothScrollProps> = ({ children }) => {
     (
       target: string | HTMLElement | number,
       options?: {
+        smooth?: boolean;
+        position?: string;
         offset?: number;
         duration?: number;
-        immediate?: boolean;
-        lock?: boolean;
-        easing?: (t: number) => number;
-        onComplete?: () => void;
       }
     ) => {
-      if (lenisRef.current) {
-        lenisRef.current.scrollTo(target, {
-          duration: 1.2,
-          easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-          ...options,
-        });
+      if (globalSmoother) {
+        if (typeof target === "number") {
+          globalSmoother.scrollTo(target, options?.smooth !== false);
+        } else {
+          globalSmoother.scrollTo(target, options?.smooth !== false, options?.position || "top top");
+        }
       } else {
         if (typeof target === "number") {
-          window.scrollTo({ top: target, behavior: "smooth" });
+          window.scrollTo({ top: target, behavior: options?.smooth === false ? "instant" : "smooth" });
         } else {
           const el = typeof target === "string" ? document.querySelector(target) : target;
-          el?.scrollIntoView({ behavior: "smooth" });
+          el?.scrollIntoView({ behavior: options?.smooth === false ? "instant" : "smooth" });
         }
       }
     },
@@ -133,7 +122,7 @@ export const SmoothScroll: React.FC<SmoothScrollProps> = ({ children }) => {
   return (
     <ScrollContext.Provider
       value={{
-        lenis: lenisInstance,
+        smoother: smootherInstance,
         scrollY,
         velocity,
         direction,
@@ -141,7 +130,11 @@ export const SmoothScroll: React.FC<SmoothScrollProps> = ({ children }) => {
         scrollTo,
       }}
     >
-      {children}
+      <div id="smooth-wrapper" ref={wrapperRef} className="w-full">
+        <div id="smooth-content" ref={contentRef} className="w-full">
+          {children}
+        </div>
+      </div>
     </ScrollContext.Provider>
   );
 };

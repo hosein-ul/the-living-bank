@@ -162,3 +162,106 @@ Gate result: `npx tsc --noEmit` clean (0 errors), `NODE_OPTIONS=--max-old-space-
 - `components/scenes/S9Ledger.tsx`
 - `components/scenes/S10Epilogue.tsx`
 - `PROGRESS.md`
+
+---
+
+## TASK3 — Motion Quality Pass — 2026-08-30
+Gate result: `npx tsc --noEmit` clean (0 errors), `NODE_OPTIONS=--max-old-space-size=1024 npm run build` passed (0 errors, 4/4 static pages generated). Headless browser visual verification passed across 8 scroll positions with zero text skew, continuous pinned stage transformations, and distinct per-chapter signature techniques.
+
+### Fixes & Motion Upgrades:
+1. **Zero Text Skew (Fix 1)**:
+   - Completely eliminated `VelocitySkew` from all text/copy columns across all 10 chapters.
+   - Removed all `skewY` animations from `KineticText.tsx`.
+   - Guaranteed that copy typography remains perfectly straight and legible even during rapid inertial scrolling.
+2. **High-Drama Per-Character Title Reveals**:
+   - Upgraded `SplitChars.tsx` with high-amplitude 3D rotation (`rotateX: 45° → 0°`), vertical elevation (`y: 60px → 0px`), and optical de-blur (`filter: blur(12px) → blur(0px)`).
+3. **Continuous Pinned Stage Transformations**:
+   - **S1 Island**: 315° dramatic camera orbit (`theta = p * Math.PI * 1.75`) with dynamic camera elevation, synchronized 6-structure label stamps, and modulating gold rim-lighting.
+   - **S2 Gate**: Continuous canvas particle coin walking flow with real-time rate & direction modulation from lever and scroll velocity; dynamic background tint.
+   - **S3 Charter**: 3D pointer tilt (±8°) with specular sheen gradient sweep, clip-path curtain wipe entry reveal, and STAMP slam claim.
+   - **S4 Furnace**: SVG Dutch auction decay curve real-time path tracing with sliding tracker head; canvas 7-particle EMBER burst on buy.
+   - **S5 Dial**: Needle angle strictly calculated via piecewise linear interpolation matching all tick marks; 4-step ratchet on inflow vs 240ms SLAM + 120ms GSAP scene shake on outflow.
+   - **S6 Vaults**: Multi-coin continuous conduit streaming along 70/15/15 SVG branches; scrubbed POL lake water level rise; buyback EMBER puffs in contraction.
+   - **S7 Run**: Sticky card stacking across 3 NPC banker tiers; live quadratic resolution fee arc redraw; STAY vs WITHDRAW branch resolution.
+   - **S8 Ghost**: Continuous Z glyph ambient drift; cracked wax seal shatter into 3 flying SVG shard paths with scatter physics + SLAM shake upon REPORT.
+   - **S9 Ledger**: Rolling-digit odometer digit column translation on entry; 5 recap action archive frames with multi-depth scroll parallax.
+   - **S10 Epilogue**: GSAP STAMP trigger on EXPERIENCED seal; session metrics textContent tweens; 1080×1080 canvas share card PNG export.
+
+### Visual Verification Artifacts:
+- `screenshots/task3-pos1-cover.png` (Cover hero with rotating coin, title, wax seal)
+- `screenshots/task3-pos2-island.png` (Chapter 1 centered 3D sovereign island)
+- `screenshots/task3-pos3-gate.png` (Chapter 2 coin queue particles and lever)
+- `screenshots/task3-pos4-charter.png` (Chapter 3 3D charter deed and seal)
+- `screenshots/task3-pos5-furnace.png` (Chapter 4 Dutch auction path tracing and furnace)
+- `screenshots/task3-pos6-dial.png` (Chapter 5 aligned 1.25x dial and 14-epoch chart)
+- `screenshots/task3-pos7-run.png` (Chapter 7 stacking banker cards and toll gate)
+## TASK4 — Art Direction Pass (Neoclassical Bank & Zero Grey Widget Boxes) — DONE 2026-08-30
+Gate result: `npx tsc --noEmit` clean (0 errors), `NODE_OPTIONS=--max-old-space-size=1024 npm run build` passed (0 errors, 4/4 static pages generated). Headless browser visual verification passed across all 11 scenes confirming zero grey widget boxes, authentic Swiss 1890 paper/engraved gold aesthetic, and monumental Neoclassical Bank geometry.
+
+### 1. Architectural Rebuild of ThreeIsland.tsx (Neoclassical Sovereign Bank)
+- Rebuilt from scratch using monumental Neoclassical banking architecture:
+  - **Wide stone plinth**: 5 grand steps stepping down to a marble plaza ground (`y = 0.5` to `1.2`).
+  - **Colonnade of 8 monumental columns**: Evenly spaced across the facade with carved base plinths and gold capital blocks (`y = 1.4` to `3.8`).
+  - **Entablature & Triangular Pediment**: Monumental architrave with gold cornice molding and a triangular pediment featuring a centered gold medallion tympanum emblem.
+  - **Low Banking Hall & Square Drum Dome**: Rectangular hall behind the colonnade with a set-back square drum supporting a shallow dome sphere at the rear.
+  - **Dark Bronze Double Door**: Centered between the columns as the singular dark focal point (`#1e1d1b` dark bronze with gold trim and vertical seam) drawing the eye.
+  - **Lighting & Materials**: Warm limestone walls (`#e9e4d8`), warm key light, soft ambient fill, and a gold rim light grazing the pediment and columns.
+
+### 2. Elimination of Grey Widget Frames (Full-Bleed Paper Compositions)
+- Completely eliminated all grey-bordered widget cards (`bg-paper-deep/50 rounded-lg border border-ink/15 shadow-[...]`) across all 11 scenes.
+- Content sits directly on paper with negative space and thin engraved gold hairlines (`border-gold/30`).
+- Replaced web buttons with engraved brass plaques with gold bevel gradients (`bg-gradient-to-b from-[#e6c374] via-[#c9a961] to-[#a38030] text-ink border-gold`).
+
+### 3. Visual Audit Table (All 11 Scenes)
+
+| Scene | Old Issue | TASK4 Redesign | Verification Screenshot |
+|---|---|---|---|
+| **S0 Cover** | Generic background | Warm radial vignette, gold dust particles, delicate engraved orbital rings, straight title rise | `task4_00_cover.png` |
+| **S1 Island** | Small 3D box, mosque look | Full-bleed 100vw×100vh 3D canvas, monumental Neoclassical Bank with 8 columns, pediment & bronze door | `task4_01_three_island_bank.png` |
+| **S2 Gate** | Card with inner boxes | Full-bleed stage directly on paper, walking coins through stone portal arch, brass lever | `task4_02_gate_walking_coin.png` |
+| **S3 Charter** | Widget box | 1890 Swiss bond deed certificate with guilloche double hairlines, corner flourishes & wax seal | `task4_03_charter_certificate.png` |
+| **S4 Furnace** | Grey card wrapper | Engraved auction curve across width with gold hairline axes, art-deco furnace grate, brass plaque | `task4_04_furnace_auction.png` |
+| **S5 Dial** | Small dial in card | Monumental dark charcoal dial taking center stage (65-70% viewport), gold ticks directly on paper | `task4_05_monumental_dial.png` |
+| **S6 Vaults** | 4 boxy cards | 3 round steel-and-brass vault doors across width, engraved floor conduits with streaming coins | `task4_06_three_vault_doors.png` |
+| **S7 Run** | Grey container | Full-bleed lobby, 12 banker silhouettes at marble desks, overhead quadratic toll curve, brass plaque | `task4_07_run_lobby.png` |
+| **S8 Ghost** | Grey container | Dimmed lobby directly on paper, engraved wall poster, warm desk lamp pool on the sleeper | `task4_08_ghost_lamp.png` |
+| **S9 Ledger** | Card container | Two GIANT station departure odometers directly on paper, scattered polaroid archival cards | `task4_09_odometer_ledger.png` |
+| **S10 Epilogue** | Grey container | Grand framed certificate composition on paper, guilloche border, corner flourishes, signature line | `task4_10_epilogue_certificate.png` |
+
+### 4. Preservation of Constraints & Motion
+- **Copy**: 100% verbatim copy preserved across all chapters (`content/chapters.ts`).
+- **Motion**: Zero text skew (straight typography), high-amplitude per-character 3D title rises, continuous pinned transformations, and smooth Lenis + GSAP ticker synchronization all preserved and verified.
+- **Palette**: Strictly paper (`#f4f1ea`), ink (`#1a1a18`), gold (`#b08d2e`), semantic emerald (`#3d6b4f`) and ruby (`#a33b2e`).
+
+---
+
+## TASK5 — Scroll Engine Migration (GSAP ScrollSmoother) & S3 "Vault Handover" Redesign — DONE 2026-08-30
+Gate result: `npx tsc --noEmit` clean (0 errors), `NODE_OPTIONS=--max-old-space-size=1024 npm run build` passed (0 errors, 4/4 static pages generated). Monotonic scroll-through test passed seamlessly from 0px to 21,718px without sticking or rubber-banding. Zero console errors.
+
+### PART 1: Scroll Bug Root Cause & GSAP ScrollSmoother Migration
+- **Root Cause Diagnosis**: `body` in `app/globals.css` had `overflow-x: hidden`, which caused browsers to calculate computed `overflow: hidden auto` / `overflow-y: hidden` on the root scroll document. This fought smooth scroll momentum, creating stuck states on real devices.
+- **Solution & Architecture Overhaul**:
+  1. Restored natural document flow with `overflow: visible` on `html` and `body` in `app/globals.css`.
+  2. Removed `lenis` dependency completely from `package.json`.
+  3. Rebuilt `components/chrome/SmoothScroll.tsx` with the official GSAP `ScrollSmoother` plugin (`gsap/ScrollSmoother`), structured with `#smooth-wrapper` and `#smooth-content` DOM elements.
+  4. Registered `ScrollSmoother`, `ScrollTrigger`, and `useGSAP` in `lib/gsap.ts`.
+  5. Configured `ScrollSmoother.create({ wrapper: '#smooth-wrapper', content: '#smooth-content', smooth: 1.2, effects: true, smoothTouch: 0.1, normalizeScroll: false })`.
+  6. Verified that all GSAP `ScrollTrigger` pins and scrubs work in native lockstep with `ScrollSmoother`.
+  7. Ran programmatic headless monotonic scroll-through test verifying smooth advancement to page bottom with 0 stuck states.
+
+### PART 2: S3Charter "The Vault Handover" Rebuild
+- **New Concept**: Walking up to the counter of a grand bank to receive the founding ledger book.
+- **Visual Design**:
+  - **Monumental Brass Bank Counter**: Layered SVG/DOM counter slab spanning the lower scene, featuring a polished brass top edge with light specular inlays and a dark walnut front slab with gold line details.
+  - **Pool of Light & Ambient Dust**: Warm conical desk lamp glow illuminating the book, with subtle floating gold particles drifting in the light beam.
+  - **3D Leather-Bound Ledger Book**: Heavy dark leather cover with gold-embossed spine rules and central bank medallion seal.
+  - **Interactive 3D Opening Animation**: On clicking the brass plaque button (*"TAKE YOUR CHARTER — FREE"*), the book's front cover rotates open in 3D perspective (`rotateY: -180deg`), unfurling a gold silk ribbon bookmark and revealing the two-page founding deed.
+  - **Animated Fountain Pen Signature**: The deed features an animated SVG path stroke (`strokeDashoffset` animation over 850ms) writing the founding signature line and issuing *Charter №0042*.
+  - **Full-bleed paper composition**: Sits directly on `#f4f1ea` paper with engraved wall panelling lines, gold hairline counter rule, and zero widget boxes.
+  - **Reduced Motion Fallback**: Gracefully defaults to an open static ledger with clear typography.
+
+### Verification Artifacts:
+- `task5_charter_before_claim.png`: Closed leather ledger book resting on the brass-and-walnut counter under the desk lamp.
+- `task5_charter_after_claim.png`: Open 3D ledger book with gold silk ribbon, active charter certificate, and animated fountain pen signature.
+- `task5_sanity_01_cover.png`, `task5_sanity_02_dial.png`, `task5_sanity_03_epilogue.png`: Full scroll-through sanity verification.
+

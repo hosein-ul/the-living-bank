@@ -9,7 +9,7 @@ import { formatNumber, formatPercent } from "../sim/formatters";
 import { CHAPTERS_CONTENT } from "@/content/chapters";
 import { sound } from "@/lib/sound";
 import { KineticText } from "../motion/KineticText";
-import { VelocitySkew } from "../motion/VelocitySkew";
+import { SplitChars } from "../motion/SplitChars";
 import { gsap, ScrollTrigger } from "@/lib/gsap";
 
 export const S7Run: React.FC = () => {
@@ -86,62 +86,66 @@ export const S7Run: React.FC = () => {
     <section
       id="chapter-7"
       ref={containerRef}
-      className="relative min-h-[220vh] border-t border-ink/10 bg-paper select-none"
+      className="relative min-h-[220vh] border-t border-gold/25 bg-paper select-none overflow-hidden"
     >
+      {/* Background warm light vignette */}
+      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-gold/5 via-transparent to-ink/5" />
+
       <div className="sticky top-0 h-screen w-full flex flex-col lg:flex-row items-center justify-between p-6 sm:p-12 lg:p-16 max-w-7xl mx-auto overflow-hidden">
-        {/* Copy Column (~42% desktop) with Velocity Skew */}
-        <div className="w-full lg:w-[42%] flex flex-col justify-center order-2 lg:order-1 mt-6 lg:mt-0 z-10">
-          <VelocitySkew maxSkew={1.5}>
-            <div className="mb-3 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-gold animate-live-dot" />
-              <KineticText
-                text={`CHAPTER ${content.numeral} · ${content.title}`}
-                as="span"
-                velocityReactive={true}
-                className="font-mono text-xs uppercase tracking-widest text-gold font-semibold"
-              />
-            </div>
+        {/* Copy Column (~38% desktop) - ZERO text skew */}
+        <div className="w-full lg:w-[38%] flex flex-col justify-center order-2 lg:order-1 mt-6 lg:mt-0 z-10">
+          <div className="mb-3 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-gold animate-live-dot" />
+            <span className="font-mono text-xs uppercase tracking-widest text-gold font-semibold">
+              CHAPTER {content.numeral} · {content.title}
+            </span>
+          </div>
 
-            <p className="font-serif text-lg sm:text-xl text-ink leading-relaxed max-w-[34ch] mb-4">
-              {content.copy}
-            </p>
+          <div className="mb-4">
+            <SplitChars
+              text={content.copy}
+              as="p"
+              triggerOnScroll={true}
+              stagger={0.015}
+              className="font-serif text-lg sm:text-2xl text-ink leading-relaxed max-w-[34ch]"
+            />
+          </div>
 
-            {/* 50/50 Fee Splitter Visualizer */}
-            <div className="p-3 bg-paper-deep rounded border border-ink/15 mb-4 shadow-sm">
-              <div className="flex justify-between items-center text-[9px] font-mono uppercase tracking-wider text-ink-60 mb-1">
-                <span className="text-gold font-bold">50% Stayers' Mugs</span>
-                <span>RUNNER'S EXIT TOLL</span>
-                <span className="text-red font-bold">50% Permanent Burn</span>
-              </div>
-              <div className="h-1.5 w-full bg-paper rounded-full overflow-hidden flex">
-                <div className="h-full bg-gold w-1/2" />
-                <div className="h-full bg-red w-1/2" />
-              </div>
+          {/* 50/50 Fee Splitter Visualizer (Directly on Paper) */}
+          <div className="py-3 border-y border-gold/30 mb-5">
+            <div className="flex justify-between items-center text-[9.5px] font-mono uppercase tracking-wider text-ink-60 mb-1.5">
+              <span className="text-gold font-bold">50% Stayers' Mugs</span>
+              <span className="font-bold text-ink">RUNNER'S EXIT TOLL</span>
+              <span className="text-red font-bold">50% Permanent Burn</span>
             </div>
+            <div className="h-2 w-full bg-paper-deep/80 border border-gold/30 rounded-full overflow-hidden flex">
+              <div className="h-full bg-gold w-1/2" />
+              <div className="h-full bg-red w-1/2" />
+            </div>
+          </div>
 
-            {/* Gold Fraunces Italic Takeaway */}
-            <div className="border-l-2 border-gold pl-4 py-1">
-              <KineticText
-                text={`“${content.takeaway}”`}
-                as="p"
-                italicTakeaway={true}
-                delay={0.15}
-                className="font-serif italic text-gold text-sm sm:text-base tracking-wide"
-              />
-            </div>
-          </VelocitySkew>
+          {/* Gold Fraunces Italic Takeaway */}
+          <div className="border-l-2 border-gold pl-4 py-1">
+            <KineticText
+              text={`“${content.takeaway}”`}
+              as="p"
+              italicTakeaway={true}
+              delay={0.15}
+              className="font-serif italic text-gold text-sm sm:text-base tracking-wide"
+            />
+          </div>
         </div>
 
-        {/* Stage (~56% desktop): Bank Lobby with Sticky Card Stacking */}
+        {/* Stage (~60% desktop): Bank Lobby with 12 Bankers directly on paper */}
         <div
           ref={cardStackRef}
-          className="w-full lg:w-[56%] flex flex-col items-center justify-center bg-paper-deep/50 p-6 sm:p-8 rounded-lg border border-ink/15 shadow-[0_12px_32px_rgba(26,26,24,0.06)] order-1 lg:order-2"
+          className="w-full lg:w-[60%] flex flex-col items-center justify-center order-1 lg:order-2"
         >
-          {/* Top Bar: Toll Gate Arc + Status */}
-          <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
+          {/* Top Bar: Toll Gate Arc + Status directly on paper */}
+          <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-4 pb-3 border-b border-gold/30 mb-4">
             <div className="w-full sm:w-auto">
-              <span className="font-mono text-[10px] uppercase tracking-wider text-ink-60 block mb-1 font-semibold">
-                Lobby Status
+              <span className="font-mono text-[9px] uppercase tracking-widest text-ink-60 block font-bold">
+                LOBBY STATUS:
               </span>
               <span className="font-serif font-bold text-base sm:text-lg text-ink">
                 {hasRunTriggered ? "PANIC: RUN IN PROGRESS" : "NORMAL OPERATIONS (12 BANKERS)"}
@@ -154,11 +158,11 @@ export const S7Run: React.FC = () => {
           </div>
 
           {/* 12 NPC Bankers Grid arranged in 3 stacking tiers */}
-          <div className="w-full space-y-2.5 mb-5">
+          <div className="w-full space-y-2 mb-5">
             {[0, 1, 2].map((tierIdx) => (
               <div
                 key={tierIdx}
-                className="banker-card-tier grid grid-cols-4 gap-2.5 p-2 bg-paper/60 rounded border border-ink/10 will-change-transform"
+                className="banker-card-tier grid grid-cols-4 gap-2 p-1.5 border border-gold/20 rounded-xs bg-paper/40 will-change-transform"
               >
                 {Array.from({ length: 4 }).map((_, colIdx) => {
                   const idx = tierIdx * 4 + colIdx;
@@ -189,12 +193,12 @@ export const S7Run: React.FC = () => {
             ))}
           </div>
 
-          {/* Interaction Controls */}
+          {/* Monumental Action Buttons */}
           {!hasRunTriggered ? (
             <button
               onClick={handleTriggerRun}
               aria-label={content.buttonRun}
-              className="px-8 py-3.5 bg-red hover:bg-[#852f24] text-paper rounded font-mono text-xs sm:text-sm font-bold tracking-widest uppercase shadow-lg hover:shadow-xl transition-transform active:scale-95 cursor-pointer focus-visible:ring-2 focus-visible:ring-gold"
+              className="w-full sm:w-auto px-8 py-4 bg-red hover:bg-[#852f24] text-paper rounded font-mono text-xs sm:text-sm font-bold tracking-widest uppercase shadow-lg hover:shadow-xl transition-transform active:scale-95 cursor-pointer border border-red"
             >
               ⚠ TRIGGER {content.buttonRun}
             </button>
@@ -203,7 +207,7 @@ export const S7Run: React.FC = () => {
               <button
                 onClick={() => handleChoice("STAY")}
                 aria-label={content.buttonStay}
-                className="flex-1 py-3.5 px-4 bg-gold hover:bg-gold-bright text-paper rounded font-mono text-xs sm:text-sm font-bold tracking-wider uppercase shadow-md hover:shadow-lg transition-transform active:scale-95 cursor-pointer focus-visible:ring-2 focus-visible:ring-gold"
+                className="flex-1 py-4 px-5 bg-gradient-to-b from-[#e6c374] via-[#c9a961] to-[#a38030] text-ink border border-gold rounded font-mono text-xs sm:text-sm font-bold tracking-wider uppercase shadow-md hover:shadow-lg transition-transform active:scale-95 cursor-pointer"
               >
                 {content.buttonStay}
               </button>
@@ -211,7 +215,7 @@ export const S7Run: React.FC = () => {
               <button
                 onClick={() => handleChoice("WITHDRAW")}
                 aria-label={content.buttonWithdraw}
-                className="flex-1 py-3.5 px-4 bg-paper border border-red text-red hover:bg-red/10 rounded font-mono text-xs sm:text-sm font-bold tracking-wider uppercase transition-transform active:scale-95 cursor-pointer focus-visible:ring-2 focus-visible:ring-gold"
+                className="flex-1 py-4 px-5 bg-paper border-2 border-red text-red hover:bg-red/10 rounded font-mono text-xs sm:text-sm font-bold tracking-wider uppercase transition-transform active:scale-95 cursor-pointer"
               >
                 {content.buttonWithdraw}
               </button>

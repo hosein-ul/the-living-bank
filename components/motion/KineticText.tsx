@@ -25,13 +25,11 @@ export const KineticText: React.FC<KineticTextProps> = ({
   delay = 0,
   stagger = 0.035,
   duration = 0.64,
-  velocityReactive = false,
   viewportOnce = true,
   italicTakeaway = false,
   rotateXAmount = 15,
 }) => {
   const words = text.split(" ");
-  const { velocity } = useLenisScroll();
   const [isReduced, setIsReduced] = useState<boolean>(false);
 
   useEffect(() => {
@@ -41,11 +39,6 @@ export const KineticText: React.FC<KineticTextProps> = ({
     mediaQuery.addEventListener("change", handler);
     return () => mediaQuery.removeEventListener("change", handler);
   }, []);
-
-  // Velocity-reactive skew
-  const rawSkew = velocityReactive && !isReduced
-    ? Math.max(-4, Math.min(4, velocity * 0.04))
-    : 0;
 
   const containerVariants = {
     hidden: {},
@@ -87,14 +80,6 @@ export const KineticText: React.FC<KineticTextProps> = ({
         initial="hidden"
         whileInView="visible"
         viewport={{ once: viewportOnce, margin: "-8% 0px" }}
-        animate={
-          velocityReactive && !isReduced
-            ? {
-                skewY: rawSkew,
-                transition: { type: "spring", stiffness: 300, damping: 25 },
-              }
-            : undefined
-        }
         className="inline-flex flex-wrap gap-x-[0.26em] transform-style-3d"
       >
         {words.map((word, i) => (

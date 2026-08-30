@@ -9,7 +9,7 @@ import { formatRate } from "../sim/formatters";
 import { CHAPTERS_CONTENT } from "@/content/chapters";
 import { sound } from "@/lib/sound";
 import { KineticText } from "../motion/KineticText";
-import { VelocitySkew } from "../motion/VelocitySkew";
+import { SplitChars } from "../motion/SplitChars";
 import { gsap } from "@/lib/gsap";
 
 export const S8Ghost: React.FC = () => {
@@ -101,59 +101,63 @@ export const S8Ghost: React.FC = () => {
     <section
       id="chapter-8"
       ref={containerRef}
-      className="relative min-h-[240vh] border-t border-ink/10 bg-[#eae5d8] select-none"
+      className="relative min-h-[240vh] border-t border-gold/25 bg-[#eae5d8] select-none overflow-hidden"
     >
+      {/* Background warm light vignette */}
+      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-gold/5 via-transparent to-ink/10" />
+
       <div className="sticky top-0 h-screen w-full flex flex-col lg:flex-row items-center justify-between p-6 sm:p-12 lg:p-16 max-w-7xl mx-auto overflow-hidden">
-        {/* Copy Column (~42% desktop) with Velocity Skew */}
-        <div className="w-full lg:w-[42%] flex flex-col justify-center order-2 lg:order-1 mt-6 lg:mt-0 z-10">
-          <VelocitySkew maxSkew={1.5}>
-            <div className="mb-3 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-gold animate-live-dot" />
-              <KineticText
-                text={`CHAPTER ${content.numeral} · ${content.title}`}
-                as="span"
-                velocityReactive={true}
-                className="font-mono text-xs uppercase tracking-widest text-gold font-semibold"
-              />
-            </div>
+        {/* Copy Column (~38% desktop) - ZERO text skew */}
+        <div className="w-full lg:w-[38%] flex flex-col justify-center order-2 lg:order-1 mt-6 lg:mt-0 z-10">
+          <div className="mb-3 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-gold animate-live-dot" />
+            <span className="font-mono text-xs uppercase tracking-widest text-gold font-semibold">
+              CHAPTER {content.numeral} · {content.title}
+            </span>
+          </div>
 
-            <p className="font-serif text-lg sm:text-xl text-ink leading-relaxed max-w-[34ch] mb-6">
-              {content.copy}
-            </p>
+          <div className="mb-6">
+            <SplitChars
+              text={content.copy}
+              as="p"
+              triggerOnScroll={true}
+              stagger={0.015}
+              className="font-serif text-lg sm:text-2xl text-ink leading-relaxed max-w-[34ch]"
+            />
+          </div>
 
-            {/* Gold Fraunces Italic Takeaway */}
-            <div className="border-l-2 border-gold pl-4 py-1">
-              <KineticText
-                text={`“${content.takeaway}”`}
-                as="p"
-                italicTakeaway={true}
-                delay={0.15}
-                className="font-serif italic text-gold text-sm sm:text-base tracking-wide"
-              />
-            </div>
-          </VelocitySkew>
+          {/* Gold Fraunces Italic Takeaway */}
+          <div className="border-l-2 border-gold pl-4 py-1 mb-6">
+            <KineticText
+              text={`“${content.takeaway}”`}
+              as="p"
+              italicTakeaway={true}
+              delay={0.15}
+              className="font-serif italic text-gold text-sm sm:text-base tracking-wide"
+            />
+          </div>
         </div>
 
-        {/* Stage (~56% desktop): Dimmed Lobby with Ghost NPC */}
+        {/* Stage (~60% desktop): Dimmed Lobby directly on paper */}
         <div
           ref={stageRef}
-          className="w-full lg:w-[56%] flex flex-col items-center justify-center bg-paper-deep/70 p-6 sm:p-8 rounded-lg border border-ink/20 shadow-[0_12px_32px_rgba(26,26,24,0.08)] order-1 lg:order-2 will-change-transform"
+          className="w-full lg:w-[60%] flex flex-col items-center justify-center order-1 lg:order-2 will-change-transform"
         >
-          {/* Wall Poster: DORMANT 30 DAYS — BOUNTY 2% */}
-          <div className="w-full flex items-center justify-between p-3.5 bg-paper rounded-lg border border-gold/50 mb-5 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="w-2.5 h-2.5 rounded-full bg-red animate-pulse" />
+          {/* Engraved Wall Poster: DORMANT 30 DAYS — BOUNTY 2% directly on paper */}
+          <div className="w-full flex items-center justify-between py-3 border-y border-gold/40 mb-5">
+            <div className="flex items-center gap-2.5">
+              <div className="w-2 h-2 rounded-full bg-red animate-pulse" />
               <span className="font-mono text-xs font-bold text-ink uppercase tracking-wider">
                 {content.poster}
               </span>
             </div>
-            <span className="font-mono text-[10.5px] text-gold font-bold">
+            <span className="font-mono text-[11px] text-gold font-bold">
               REWARD: 1,000 $STANDARD
             </span>
           </div>
 
-          {/* NPCs in Dimmed Lobby: 1 Dormant Ghost Banker */}
-          <div className="grid grid-cols-4 gap-3 w-full mb-5">
+          {/* NPCs in Dimmed Lobby: 1 Dormant Ghost Banker under Pool of Desk Light */}
+          <div className="grid grid-cols-4 gap-2.5 w-full mb-5 relative">
             {Array.from({ length: 8 }).map((_, idx) => {
               const isGhost = idx === 3;
               const state: NPCState = isGhost
@@ -164,12 +168,17 @@ export const S8Ghost: React.FC = () => {
 
               return (
                 <div key={idx} className="relative">
+                  {/* Desk lamp pool of light on sleeper */}
+                  {isGhost && !hasReported && (
+                    <div className="absolute -inset-2 bg-[radial-gradient(circle,_rgba(230,195,116,0.35)_0%,_transparent_70%)] rounded-full pointer-events-none animate-pulse" />
+                  )}
+
                   <NPC
                     id={idx + 1}
                     state={state}
                     deskLabel={isGhost ? "GHOST BANKER" : `Banker #${(idx + 1).toString().padStart(2, "0")}`}
                     hasMug={!isGhost}
-                    className={isGhost && !hasReported ? "ring-2 ring-red/50 shadow-md" : ""}
+                    className={isGhost && !hasReported ? "ring-1 ring-red/60 shadow-md bg-paper/90" : "bg-paper/40 border-gold/20"}
                   />
 
                   {/* 3 SVG Shards that fly apart on REPORT */}
@@ -210,11 +219,11 @@ export const S8Ghost: React.FC = () => {
             })}
           </div>
 
-          {/* Dilution Yield Speedup Status */}
-          <div className="w-full p-3 bg-paper rounded-lg border border-ink/15 flex items-center justify-between mb-5 font-mono text-xs shadow-sm">
-            <span className="text-ink-60 uppercase text-[10px] font-semibold">Your Pro-Rata Yield Stream:</span>
+          {/* Dilution Yield Speedup Status directly on paper */}
+          <div className="w-full py-2.5 border-b border-gold/30 flex items-center justify-between mb-5 font-mono text-xs">
+            <span className="text-ink-60 uppercase text-[10px] font-bold">PRO-RATA YIELD:</span>
             <span className="font-bold text-gold text-sm">{formatRate(accrualRate)}</span>
-            <span className="text-[10px] text-green font-bold">
+            <span className="text-[10.5px] text-green font-bold">
               {hasReported ? "▲ Dilution reduced (+20% faster)" : "Active"}
             </span>
           </div>
@@ -224,7 +233,7 @@ export const S8Ghost: React.FC = () => {
             <button
               onClick={handleReport}
               aria-label={content.button}
-              className="px-8 py-3.5 bg-red hover:bg-[#852f24] text-paper rounded font-mono text-xs sm:text-sm font-bold tracking-widest uppercase shadow-lg hover:shadow-xl transition-transform active:scale-95 cursor-pointer focus-visible:ring-2 focus-visible:ring-gold"
+              className="w-full sm:w-auto px-8 py-4 bg-red hover:bg-[#852f24] text-paper rounded font-mono text-xs sm:text-sm font-bold tracking-widest uppercase shadow-lg hover:shadow-xl transition-transform active:scale-95 cursor-pointer border border-red"
             >
               ⚖ {content.button}
             </button>
