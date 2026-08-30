@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState, useRef, useCallback } from "react";
 import Lenis from "lenis";
+import { gsap, ScrollTrigger } from "@/lib/gsap";
 
 export interface ScrollContextValue {
   lenis: Lenis | null;
@@ -9,14 +10,17 @@ export interface ScrollContextValue {
   velocity: number;
   direction: number;
   progress: number;
-  scrollTo: (target: string | HTMLElement | number, options?: {
-    offset?: number;
-    duration?: number;
-    immediate?: boolean;
-    lock?: boolean;
-    easing?: (t: number) => number;
-    onComplete?: () => void;
-  }) => void;
+  scrollTo: (
+    target: string | HTMLElement | number,
+    options?: {
+      offset?: number;
+      duration?: number;
+      immediate?: boolean;
+      lock?: boolean;
+      easing?: (t: number) => number;
+      onComplete?: () => void;
+    }
+  ) => void;
 }
 
 const defaultContextValue: ScrollContextValue = {
@@ -29,6 +33,10 @@ const defaultContextValue: ScrollContextValue = {
 };
 
 const ScrollContext = createContext<ScrollContextValue>(defaultContextValue);
+
+// Singleton reference accessible outside React lifecycle if needed
+let globalLenis: Lenis | null = null;
+export const getLenis = () => globalLenis;
 
 export const useLenisScroll = () => useContext(ScrollContext);
 
@@ -62,26 +70,32 @@ export const SmoothScroll: React.FC<SmoothScrollProps> = ({ children }) => {
     });
 
     lenisRef.current = lenis;
+    globalLenis = lenis;
     setLenisInstance(lenis);
 
+    // 1. Synchronize Lenis scroll event with ScrollTrigger update
     lenis.on("scroll", (e: { scroll: number; velocity: number; direction: number; progress: number }) => {
       setScrollY(e.scroll);
       setVelocity(e.velocity);
       setDirection(e.direction);
       setProgress(e.progress);
+      ScrollTrigger.update();
     });
 
-    let animationFrameId: number;
-    function raf(time: number) {
-      lenis.raf(time);
-      animationFrameId = requestAnimationFrame(raf);
-    }
-    animationFrameId = requestAnimationFrame(raf);
+    // 2. Drive Lenis RAF loop through GSAP ticker for perfect sync
+    const tickerCallback = (time: number) => {
+      lenis.raf(time * 1000);
+    };
+    gsap.ticker.add(tickerCallback);
+
+    // 3. Disable GSAP lag smoothing to prevent visual desynchronization
+    gsap.ticker.lagSmoothing(0);
 
     return () => {
-      cancelAnimationFrame(animationFrameId);
+      gsap.ticker.remove(tickerCallback);
       lenis.destroy();
       lenisRef.current = null;
+      globalLenis = null;
       setLenisInstance(null);
     };
   }, []);

@@ -1,16 +1,15 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useSim } from "../sim/SimProvider";
 import { Furnace } from "../atoms/Furnace";
-import { formatNumber, formatPips, formatRate } from "../sim/formatters";
+import { formatNumber, formatRate } from "../sim/formatters";
 import { CHAPTERS_CONTENT } from "@/content/chapters";
 import { sound } from "@/lib/sound";
-import { EASINGS } from "@/lib/easings";
 import { KineticText } from "../motion/KineticText";
-import { ScrubbedConduit } from "../motion/ScrubbedConduit";
-import { MultiParallaxLayer } from "../motion/MultiParallaxLayer";
+import { VelocitySkew } from "../motion/VelocitySkew";
+import { gsap, ScrollTrigger } from "@/lib/gsap";
 
 export const S4Furnace: React.FC = () => {
   const content = CHAPTERS_CONTENT.s4;
@@ -31,30 +30,45 @@ export const S4Furnace: React.FC = () => {
   }));
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const pathRef = useRef<SVGPathElement>(null);
+  const markerRef = useRef<HTMLDivElement>(null);
+  const pipContainerRef = useRef<HTMLDivElement>(null);
   const [burnTimestamp, setBurnTimestamp] = useState<number>(0);
   const [hasBoughtOnce, setHasBoughtOnce] = useState<boolean>(false);
   const [flyingCoin, setFlyingCoin] = useState<boolean>(false);
-  const [trackProgress, setTrackProgress] = useState<number>(0.35);
 
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start start", "end end"],
-  });
-
-  const copyY = useTransform(scrollYProgress, [0, 1], [0, 30]);
-
+  // SVG Dutch Auction decay curve path tracing scrubbed with GSAP ScrollTrigger
   useEffect(() => {
-    return scrollYProgress.on("change", (latest) => {
-      // Auction rail scrubbed by scroll progress
-      setTrackProgress((latest * 1.5) % 1);
+    const el = containerRef.current;
+    const path = pathRef.current;
+    const marker = markerRef.current;
+    if (!el || !path) return;
+
+    const pathLength = path.getTotalLength();
+    path.style.strokeDasharray = `${pathLength}`;
+    path.style.strokeDashoffset = `${pathLength}`;
+
+    const st = ScrollTrigger.create({
+      trigger: el,
+      start: "top top",
+      end: "bottom bottom",
+      scrub: 1,
+      onUpdate: (self) => {
+        const p = self.progress;
+        // Stroke dashoffset path tracing
+        const drawLen = pathLength * (1 - p);
+        path.style.strokeDashoffset = `${drawLen}`;
+
+        // Marker sliding along curve
+        if (marker) {
+          const point = path.getPointAtLength(p * pathLength);
+          marker.style.left = `${(point.x / 400) * 100}%`;
+          marker.style.top = `${point.y}px`;
+        }
+      },
     });
-  }, [scrollYProgress]);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setTrackProgress((prev) => (prev >= 1 ? 0 : prev + 0.004));
-    }, 150);
-    return () => clearInterval(interval);
+    return () => st.kill();
   }, []);
 
   const isMaxBranches = branches >= 10;
@@ -74,92 +88,85 @@ export const S4Furnace: React.FC = () => {
           setHasBoughtOnce(true);
           sound.playFurnaceRoar();
           sound.playThud();
+
+          // STAMP animation on the newly filled branch pip
+          if (pipContainerRef.current) {
+            const pips = pipContainerRef.current.querySelectorAll(".branch-pip");
+            const newPipIdx = branches; // 0-indexed for next pip
+            if (pips[newPipIdx]) {
+              gsap.fromTo(
+                pips[newPipIdx],
+                { scale: 1.8, filter: "brightness(2)" },
+                { scale: 1.0, filter: "brightness(1)", duration: 0.45, ease: "back.out(2)" }
+              );
+            }
+          }
         }
         setFlyingCoin(false);
       }, 360);
     }
   };
 
-  // Exponential decay curve for Dutch Auction
   const auctionCurvePath = "M 10 12 C 120 14, 240 38, 390 48";
 
   return (
     <section
       id="chapter-4"
-      ref={containerRef as unknown as React.RefObject<HTMLElement>}
+      ref={containerRef}
       className="relative min-h-[260vh] border-t border-ink/10 bg-paper select-none"
     >
-      {/* Layer 0: Background Crucible Embers Linework drifting [-30, -50] */}
-      <MultiParallaxLayer
-        progress={scrollYProgress}
-        vector={[-30, -50]}
-        className="absolute inset-0 pointer-events-none opacity-10 flex items-center justify-center"
-      >
-        <svg viewBox="0 0 800 800" className="w-[800px] h-[800px] max-w-none">
-          <circle cx="400" cy="400" r="300" fill="none" stroke="#a33b2e" strokeWidth="1" strokeDasharray="4 6" />
-          <polygon points="400,150 480,300 650,300 520,400 570,550 400,450 230,550 280,400 150,300 320,300" fill="none" stroke="#b08d2e" strokeWidth="0.8" />
-        </svg>
-      </MultiParallaxLayer>
-
       <div className="sticky top-0 h-screen w-full flex flex-col lg:flex-row items-center justify-between p-6 sm:p-12 lg:p-16 max-w-7xl mx-auto overflow-hidden">
-        {/* Copy Column (~42% desktop) */}
-        <motion.div
-          style={{ y: copyY }}
-          className="w-full lg:w-[42%] flex flex-col justify-center order-2 lg:order-1 mt-6 lg:mt-0 z-10"
-        >
-          <div className="mb-3 flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-gold animate-live-dot" />
-            <KineticText
-              text={`CHAPTER ${content.numeral} · ${content.title}`}
-              as="span"
-              velocityReactive={true}
-              className="font-mono text-xs uppercase tracking-widest text-gold font-semibold"
-            />
-          </div>
+        {/* Copy Column (~42% desktop) with Velocity Skew */}
+        <div className="w-full lg:w-[42%] flex flex-col justify-center order-2 lg:order-1 mt-6 lg:mt-0 z-10">
+          <VelocitySkew maxSkew={1.5}>
+            <div className="mb-3 flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-gold animate-live-dot" />
+              <KineticText
+                text={`CHAPTER ${content.numeral} · ${content.title}`}
+                as="span"
+                velocityReactive={true}
+                className="font-mono text-xs uppercase tracking-widest text-gold font-semibold"
+              />
+            </div>
 
-          <motion.p
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.1, ease: EASINGS.smooth }}
-            className="font-serif text-lg sm:text-xl text-ink leading-relaxed max-w-[34ch] mb-4"
-          >
-            {content.copy}
-          </motion.p>
+            <p className="font-serif text-lg sm:text-xl text-ink leading-relaxed max-w-[34ch] mb-4">
+              {content.copy}
+            </p>
 
-          {/* Subtext that fades in after first buy */}
-          <AnimatePresence>
-            {hasBoughtOnce && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.42 }}
-                className="p-3.5 bg-paper-deep border border-gold/40 rounded text-xs font-serif text-ink-60 italic mb-6 leading-relaxed shadow-sm"
-              >
-                {content.subtext}
-              </motion.div>
-            )}
-          </AnimatePresence>
+            {/* Subtext that fades in after first buy */}
+            <AnimatePresence>
+              {hasBoughtOnce && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.42 }}
+                  className="p-3.5 bg-paper-deep border border-gold/40 rounded text-xs font-serif text-ink-60 italic mb-6 leading-relaxed shadow-sm"
+                >
+                  {content.subtext}
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-          {/* Gold Fraunces Italic Takeaway with KineticText */}
-          <div className="border-l-2 border-gold pl-4 py-1">
-            <KineticText
-              text={`“${content.takeaway}”`}
-              as="p"
-              italicTakeaway={true}
-              delay={0.15}
-              className="font-serif italic text-gold text-sm sm:text-base tracking-wide"
-            />
-          </div>
-        </motion.div>
+            {/* Gold Fraunces Italic Takeaway */}
+            <div className="border-l-2 border-gold pl-4 py-1">
+              <KineticText
+                text={`“${content.takeaway}”`}
+                as="p"
+                italicTakeaway={true}
+                delay={0.15}
+                className="font-serif italic text-gold text-sm sm:text-base tracking-wide"
+              />
+            </div>
+          </VelocitySkew>
+        </div>
 
         {/* Stage (~56% desktop) */}
         <div className="w-full lg:w-[56%] flex flex-col items-center justify-center bg-paper-deep/50 p-6 sm:p-8 rounded-lg border border-ink/15 shadow-[0_12px_32px_rgba(26,26,24,0.06)] order-1 lg:order-2">
           {/* Top: 24h Expansion License Dutch Auction Rail & Exponential Curve */}
           <div className="w-full mb-5 p-3.5 bg-paper rounded-lg border border-ink/15 shadow-sm">
             <div className="flex justify-between items-center mb-1.5 font-mono text-[11px] sm:text-xs uppercase tracking-wider text-ink-60">
-              <span className="font-semibold">24h Dutch Auction Decay</span>
+              <span className="font-semibold">24h Dutch Auction Decay (Path Tracing)</span>
               <span className="text-gold font-bold">
                 Price: {formatNumber(licensePrice)} $STANDARD
               </span>
@@ -167,31 +174,38 @@ export const S4Furnace: React.FC = () => {
 
             {/* Scroll-Scrubbed Dutch Auction Exponential Decay Curve */}
             <div className="relative w-full h-14 overflow-visible">
-              <ScrubbedConduit
-                d={auctionCurvePath}
-                progress={scrollYProgress}
-                progressRange={[0, 1]}
-                strokeColor="#b08d2e"
-                strokeWidth={2.4}
-                viewBox="0 0 400 60"
-                className="w-full h-full"
-                animatedGlow={true}
-              />
+              <svg viewBox="0 0 400 60" className="w-full h-full overflow-visible">
+                {/* Background Ghost Path */}
+                <path
+                  d={auctionCurvePath}
+                  fill="none"
+                  stroke="#b08d2e"
+                  strokeWidth="1.5"
+                  strokeOpacity="0.2"
+                />
+                {/* Traced Active Path */}
+                <path
+                  ref={pathRef}
+                  d={auctionCurvePath}
+                  fill="none"
+                  stroke="#b08d2e"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                />
+              </svg>
 
-              {/* Dynamic Tracking Marker along Dutch Auction Rail */}
+              {/* Dynamic Tracking Marker along Curve */}
               <div
-                style={{
-                  left: `calc(10px + ${trackProgress * 95}%)`,
-                  top: `calc(12px + ${Math.pow(trackProgress, 0.8) * 32}px)`,
-                }}
-                className="absolute -translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-gold border-2 border-[#8e6e22] shadow-md transition-all duration-150 flex items-center justify-center pointer-events-none"
+                ref={markerRef}
+                style={{ left: "10px", top: "12px" }}
+                className="absolute -translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-gold border-2 border-[#8e6e22] shadow-md flex items-center justify-center pointer-events-none transition-all duration-75"
               >
                 <div className="w-1.5 h-1.5 rounded-full bg-paper" />
               </div>
             </div>
 
             <div className="flex justify-between items-center font-mono text-[9.5px] text-ink-60 font-medium pt-1 border-t border-ink/10">
-              <span>00:00 (Open 2× Peak)</span>
+              <span>00:00 (Peak 2×)</span>
               <span>12:00 (Exponential Decay)</span>
               <span>24:00 (Floor Reserve)</span>
             </div>
@@ -201,7 +215,7 @@ export const S4Furnace: React.FC = () => {
           <div className="relative w-full flex flex-col items-center mb-5">
             <Furnace burnTrigger={burnTimestamp} />
 
-            {/* Parabolic Flying coins animation on buy */}
+            {/* Flying coin sprite on buy */}
             <AnimatePresence>
               {flyingCoin && (
                 <>
@@ -226,10 +240,27 @@ export const S4Furnace: React.FC = () => {
             </AnimatePresence>
           </div>
 
-          {/* Current Branch Pips Status */}
-          <div className="w-full flex items-center justify-between py-3 px-4 bg-paper rounded border border-ink/15 mb-4 font-mono text-xs shadow-sm">
+          {/* Current Branch Pips Status — FIX BUG 3: Render proper SVG/DOM pip rectangles instead of tofu Unicode boxes */}
+          <div
+            ref={pipContainerRef}
+            className="w-full flex items-center justify-between py-3 px-4 bg-paper rounded border border-ink/15 mb-4 font-mono text-xs shadow-sm"
+          >
             <span className="text-ink-60 uppercase text-[10px] font-semibold">Your Branches:</span>
-            <span className="font-bold text-ink tracking-wider">{formatPips(branches, 10)}</span>
+            <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1">
+                {Array.from({ length: 10 }).map((_, i) => (
+                  <span
+                    key={i}
+                    className={`branch-pip inline-block w-2.5 h-4 rounded-xs border transition-all duration-300 ${
+                      i < branches
+                        ? "bg-gold border-[#8e6e22] shadow-xs"
+                        : "bg-paper-deep border-ink/20"
+                    }`}
+                  />
+                ))}
+              </div>
+              <span className="font-bold text-ink ml-1 tabular-nums">{branches}/10</span>
+            </div>
             <span className="text-gold font-bold">({formatRate(accrualRate)})</span>
           </div>
 

@@ -2,28 +2,26 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
+import { gsap, ScrollTrigger } from "@/lib/gsap";
 
 interface ThreeIslandProps {
-  progress: number; // 0 to 1
-  activeIndex: number; // 0 to 5
+  sectionTriggerId?: string;
+  onActiveIndexChange?: (index: number) => void;
+  className?: string;
 }
 
-export const ThreeIsland: React.FC<ThreeIslandProps> = ({ progress, activeIndex }) => {
+export const ThreeIsland: React.FC<ThreeIslandProps> = ({
+  sectionTriggerId = "chapter-1",
+  onActiveIndexChange,
+  className = "",
+}) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const mouseRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const [webGLSupported, setWebGLSupported] = useState<boolean>(true);
 
-  // References for live update without tearing down WebGL context
-  const progressRef = useRef<number>(progress);
-  const activeIndexRef = useRef<number>(activeIndex);
-
-  useEffect(() => {
-    progressRef.current = progress;
-  }, [progress]);
-
-  useEffect(() => {
-    activeIndexRef.current = activeIndex;
-  }, [activeIndex]);
+  // Plain progress tracking object tweened by GSAP ScrollTrigger
+  const scrollDataRef = useRef<{ p: number }>({ p: 0 });
+  const activeIdxRef = useRef<number>(0);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -32,26 +30,18 @@ export const ThreeIsland: React.FC<ThreeIslandProps> = ({ progress, activeIndex 
     const reducedMediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
     let isReducedMotion = reducedMediaQuery.matches;
 
-    const handleReducedChange = (e: MediaQueryListEvent) => {
-      isReducedMotion = e.matches;
-      if (isReducedMotion) {
-        mouseRef.current.x = 0;
-        mouseRef.current.y = 0;
-        islandGroup.position.y = 0;
-      }
-    };
-    reducedMediaQuery.addEventListener("change", handleReducedChange);
-
-    // Setup Three.js Scene safely
+    // Three.js Scene
     const scene = new THREE.Scene();
     scene.background = new THREE.Color("#f4f1ea");
-    scene.fog = new THREE.FogExp2("#f4f1ea", 0.045);
+    const baseFogDensity = 0.04;
+    scene.fog = new THREE.FogExp2("#f4f1ea", baseFogDensity);
 
     const width = container.clientWidth || 600;
     const height = container.clientHeight || 500;
 
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
-    camera.position.set(0, 7, 13);
+    camera.position.set(0, 8.5, 16.5);
+    camera.lookAt(0, 0.6, 0);
 
     let renderer: THREE.WebGLRenderer;
     try {
@@ -62,7 +52,8 @@ export const ThreeIsland: React.FC<ThreeIslandProps> = ({ progress, activeIndex 
         failIfMajorPerformanceCaveat: false,
       });
       renderer.setSize(width, height);
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      // DPR Capped at 1.5 per TASK2.md
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
       renderer.shadowMap.enabled = true;
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
       container.innerHTML = "";
@@ -73,34 +64,34 @@ export const ThreeIsland: React.FC<ThreeIslandProps> = ({ progress, activeIndex 
       return;
     }
 
-    // Warm Architectural Lighting
-    const ambientLight = new THREE.AmbientLight("#f4f1ea", 2.0);
+    // Lighting
+    const ambientLight = new THREE.AmbientLight("#f4f1ea", 2.2);
     scene.add(ambientLight);
 
-    const sunLight = new THREE.DirectionalLight("#c9a961", 2.4);
+    const sunLight = new THREE.DirectionalLight("#c9a961", 2.6);
     sunLight.position.set(12, 18, 10);
     sunLight.castShadow = true;
     sunLight.shadow.mapSize.width = 1024;
     sunLight.shadow.mapSize.height = 1024;
     scene.add(sunLight);
 
-    const fillLight = new THREE.DirectionalLight("#e9e4d8", 1.2);
-    fillLight.position.set(-10, 6, -10);
-    scene.add(fillLight);
+    const goldRimLight = new THREE.DirectionalLight("#e6c374", 1.4);
+    goldRimLight.position.set(-12, 8, -10);
+    scene.add(goldRimLight);
 
     // Island Group
     const islandGroup = new THREE.Group();
     scene.add(islandGroup);
 
-    // Matte Paper-Gold Materials
+    // Materials
     const paperMat = new THREE.MeshLambertMaterial({ color: "#e9e4d8", flatShading: true });
     const darkMat = new THREE.MeshLambertMaterial({ color: "#1a1a18", flatShading: true });
     const goldMat = new THREE.MeshLambertMaterial({ color: "#c9a961", flatShading: true });
     const goldBrightMat = new THREE.MeshLambertMaterial({ color: "#e6c374", flatShading: true });
     const goldDimMat = new THREE.MeshLambertMaterial({ color: "#b08d2e", flatShading: true });
 
-    // 1. Water Ocean Disk with animated waves
-    const waterGeo = new THREE.CylinderGeometry(8.5, 8.5, 0.4, 32);
+    // 1. Water Ocean Disk
+    const waterGeo = new THREE.CylinderGeometry(7.5, 7.5, 0.4, 32);
     const waterMat = new THREE.MeshLambertMaterial({
       color: "#e2ded2",
       flatShading: true,
@@ -112,7 +103,7 @@ export const ThreeIsland: React.FC<ThreeIslandProps> = ({ progress, activeIndex 
     waterMesh.receiveShadow = true;
     islandGroup.add(waterMesh);
 
-    // 2. Island Base (Low-poly stepped hexagonal cylinder)
+    // 2. Island Base
     const baseGeo = new THREE.CylinderGeometry(5.2, 4.2, 1.8, 8);
     const baseMesh = new THREE.Mesh(baseGeo, paperMat);
     baseMesh.position.y = -0.7;
@@ -124,10 +115,8 @@ export const ThreeIsland: React.FC<ThreeIslandProps> = ({ progress, activeIndex 
     baseRimMesh.position.y = 0.1;
     islandGroup.add(baseRimMesh);
 
-    // 3. Central Bank (Monumental low-poly rotunda with dome & columns)
+    // 3. Central Bank Rotunda
     const bankGroup = new THREE.Group();
-    bankGroup.position.set(0, 0, 0);
-
     const rotundaGeo = new THREE.CylinderGeometry(1.6, 1.7, 2.0, 14);
     const rotundaMesh = new THREE.Mesh(rotundaGeo, paperMat);
     rotundaMesh.position.y = 1.0;
@@ -141,13 +130,11 @@ export const ThreeIsland: React.FC<ThreeIslandProps> = ({ progress, activeIndex 
     domeMesh.castShadow = true;
     bankGroup.add(domeMesh);
 
-    // Ornate Portico & Door
     const doorGeo = new THREE.BoxGeometry(0.55, 1.0, 0.25);
     const doorMesh = new THREE.Mesh(doorGeo, darkMat);
     doorMesh.position.set(0, 0.5, 1.65);
     bankGroup.add(doorMesh);
 
-    // Spire on top of Dome
     const spireGeo = new THREE.ConeGeometry(0.2, 0.8, 8);
     const spireMesh = new THREE.Mesh(spireGeo, goldMat);
     spireMesh.position.y = 3.8;
@@ -155,7 +142,7 @@ export const ThreeIsland: React.FC<ThreeIslandProps> = ({ progress, activeIndex 
 
     islandGroup.add(bankGroup);
 
-    // 4. Surrounding 5 Low-Poly Structures
+    // 4. Surrounding 5 Structures
     const structureData = [
       { name: "Pool", angle: 0, r: 3.5, color: goldMat, scale: [1.1, 0.6, 1.1] },
       { name: "Standard", angle: (Math.PI * 2) / 5, r: 3.6, color: paperMat, scale: [0.8, 1.6, 0.8] },
@@ -165,7 +152,6 @@ export const ThreeIsland: React.FC<ThreeIslandProps> = ({ progress, activeIndex 
     ];
 
     const structureMeshes: THREE.Group[] = [];
-
     structureData.forEach((st) => {
       const group = new THREE.Group();
       const x = Math.cos(st.angle) * st.r;
@@ -179,7 +165,6 @@ export const ThreeIsland: React.FC<ThreeIslandProps> = ({ progress, activeIndex 
       mesh.receiveShadow = true;
       group.add(mesh);
 
-      // Gold cap on structures
       const capGeo = new THREE.ConeGeometry(st.scale[0] * 0.7, 0.5, 4);
       const capMesh = new THREE.Mesh(capGeo, goldBrightMat);
       capMesh.position.y = st.scale[1] + 0.25;
@@ -190,20 +175,18 @@ export const ThreeIsland: React.FC<ThreeIslandProps> = ({ progress, activeIndex 
       structureMeshes.push(group);
     });
 
-    // 5. Floating Gold Dust Particles Field (120 particles)
-    const particleCount = 120;
+    // 5. Floating Gold Dust Particles Field (80 particles)
+    const particleCount = 80;
     const particleGeo = new THREE.BufferGeometry();
     const particlePositions = new Float32Array(particleCount * 3);
-    const particleVelocities: { x: number; y: number; z: number }[] = [];
+    const particleVelocities: { y: number }[] = [];
 
     for (let i = 0; i < particleCount; i++) {
       particlePositions[i * 3] = (Math.random() - 0.5) * 14;
       particlePositions[i * 3 + 1] = Math.random() * 8 - 1;
       particlePositions[i * 3 + 2] = (Math.random() - 0.5) * 14;
       particleVelocities.push({
-        x: (Math.random() - 0.5) * 0.005,
         y: 0.003 + Math.random() * 0.006,
-        z: (Math.random() - 0.5) * 0.005,
       });
     }
 
@@ -217,7 +200,7 @@ export const ThreeIsland: React.FC<ThreeIslandProps> = ({ progress, activeIndex 
     const particles = new THREE.Points(particleGeo, particleMat);
     scene.add(particles);
 
-    // Pointer Parallax Listener (±5°)
+    // Pointer Parallax
     const handlePointerMove = (e: PointerEvent) => {
       if (isReducedMotion) return;
       const rect = container.getBoundingClientRect();
@@ -226,57 +209,71 @@ export const ThreeIsland: React.FC<ThreeIslandProps> = ({ progress, activeIndex 
       mouseRef.current.x = nx * 0.08;
       mouseRef.current.y = ny * 0.06;
     };
-
     window.addEventListener("pointermove", handlePointerMove, { passive: true });
 
-    // Render Animation Loop
-    let animId: number;
+    // GSAP ScrollTrigger to scrub plain object { p: 0 -> 1 }
+    const triggerEl = document.getElementById(sectionTriggerId) || container;
+    const scrollTriggerInstance = ScrollTrigger.create({
+      trigger: triggerEl,
+      start: "top top",
+      end: "bottom bottom",
+      scrub: 1,
+      onUpdate: (self) => {
+        scrollDataRef.current.p = self.progress;
+        const newIdx = Math.min(5, Math.max(0, Math.floor(self.progress * 6)));
+        if (newIdx !== activeIdxRef.current) {
+          activeIdxRef.current = newIdx;
+          onActiveIndexChange?.(newIdx);
+        }
+      },
+    });
+
+    // Render Animation Loop & IntersectionObserver
+    let animId: number | null = null;
+    let isVisible = true;
     let currentOrbit = 0;
     let clock = new THREE.Clock();
 
     const render = () => {
+      if (!isVisible) {
+        animId = null;
+        return;
+      }
+
       clock.getDelta();
       const elapsed = clock.getElapsedTime();
+      const p = scrollDataRef.current.p;
 
-      const curProgress = progressRef.current;
-      const curActiveIdx = activeIndexRef.current;
-
-      // Smooth 300° orbit driven by scroll progress
-      const targetOrbit = curProgress * ((300 * Math.PI) / 180);
-      currentOrbit += (targetOrbit - currentOrbit) * 0.08;
+      // Scroll-driven camera orbit (theta = p * Math.PI * 1.6)
+      const targetOrbit = p * Math.PI * 1.6;
+      currentOrbit += (targetOrbit - currentOrbit) * 0.1;
 
       islandGroup.rotation.y = currentOrbit + (isReducedMotion ? 0 : mouseRef.current.x);
       islandGroup.rotation.x = isReducedMotion ? 0 : mouseRef.current.y;
-
-      // Gentle floating bob on island (suppressed on reduced motion)
       islandGroup.position.y = isReducedMotion ? 0 : Math.sin(elapsed * 1.2) * 0.08;
 
-      // Water subtle rotation & pulsing
-      if (!isReducedMotion) {
-        waterMesh.rotation.y = elapsed * 0.05;
+      // Fog & Rim Light Modulation with scroll progress
+      if (scene.fog) {
+        (scene.fog as THREE.FogExp2).density = baseFogDensity + p * 0.025;
       }
+      goldRimLight.intensity = 1.4 + Math.sin(p * Math.PI) * 1.2;
 
-      // Pulse & Elevate active structure
+      // Pulse active structure
+      const curIdx = activeIdxRef.current;
       structureMeshes.forEach((group, idx) => {
-        const isHighlight = curActiveIdx === idx + 1 || (curActiveIdx === 0 && idx === 0);
+        const isHighlight = curIdx === idx + 1 || (curIdx === 0 && idx === 0);
         const targetScale = isHighlight ? 1.2 : 1.0;
-        const targetY = isHighlight ? 0.4 : 0.0;
-
+        const targetY = isHighlight ? 0.35 : 0.0;
         group.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.1);
         group.position.y += (targetY - group.position.y) * 0.1;
       });
 
-      // Animate floating gold dust particles (suppressed on reduced motion)
+      // Animate particles
       if (!isReducedMotion) {
         const positions = particleGeo.attributes.position.array as Float32Array;
         for (let i = 0; i < particleCount; i++) {
           positions[i * 3 + 1] += particleVelocities[i].y;
-          positions[i * 3] += Math.sin(elapsed + i) * 0.002;
-          positions[i * 3 + 2] += Math.cos(elapsed + i) * 0.002;
-
-          if (positions[i * 3 + 1] > 8) {
-            positions[i * 3 + 1] = -1;
-          }
+          if (positions[i * 3 + 1] > 8) positions[i * 3 + 1] = -1;
         }
         particleGeo.attributes.position.needsUpdate = true;
       }
@@ -287,23 +284,35 @@ export const ThreeIsland: React.FC<ThreeIslandProps> = ({ progress, activeIndex 
 
     render();
 
-    // Resize Handler
+    // IntersectionObserver to pause when offscreen
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        isVisible = entry.isIntersecting;
+        if (isVisible && animId === null) {
+          animId = requestAnimationFrame(render);
+        }
+      },
+      { threshold: 0.05 }
+    );
+    observer.observe(container);
+
     const handleResize = () => {
       if (!container) return;
       const w = container.clientWidth;
       const h = container.clientHeight;
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
+      camera.lookAt(0, 0.6, 0);
       renderer.setSize(w, h);
     };
-
     window.addEventListener("resize", handleResize);
 
     return () => {
-      reducedMediaQuery.removeEventListener("change", handleReducedChange);
+      observer.disconnect();
+      scrollTriggerInstance.kill();
       window.removeEventListener("pointermove", handlePointerMove);
       window.removeEventListener("resize", handleResize);
-      cancelAnimationFrame(animId);
+      if (animId !== null) cancelAnimationFrame(animId);
       renderer.dispose();
       baseGeo.dispose();
       rotundaGeo.dispose();
@@ -313,25 +322,19 @@ export const ThreeIsland: React.FC<ThreeIslandProps> = ({ progress, activeIndex 
       waterGeo.dispose();
       particleGeo.dispose();
     };
-  }, []);
+  }, [sectionTriggerId, onActiveIndexChange]);
 
   if (!webGLSupported) {
     return (
-      <div className="w-full h-full flex flex-col items-center justify-center p-6 bg-paper-deep text-center select-none">
-        <svg viewBox="0 0 200 160" className="w-48 h-36 mb-2 drop-shadow-sm">
-          <polygon points="100,20 180,60 180,110 100,150 20,110 20,60" fill="#e9e4d8" stroke="#1a1a18" strokeWidth="2" />
-          <rect x="85" y="60" width="30" height="40" fill="#c9a961" stroke="#b08d2e" strokeWidth="1.5" />
-          <path d="M 85 60 Q 100 40 115 60 Z" fill="#b08d2e" stroke="#1a1a18" strokeWidth="1.5" />
-          <rect x="96" y="80" width="8" height="20" fill="#1a1a18" />
-        </svg>
+      <div className={`w-full h-full flex flex-col items-center justify-center p-6 bg-paper-deep text-center select-none ${className}`}>
         <span className="font-mono text-xs uppercase tracking-widest text-gold font-semibold">
-          THE SOVEREIGN ISLAND
+          THE SOVEREIGN ISLAND (3D ENGINE)
         </span>
       </div>
     );
   }
 
-  return <div ref={containerRef} className="w-full h-full min-h-[320px]" />;
+  return <div ref={containerRef} className={`w-full h-full min-h-[320px] ${className}`} />;
 };
 
 export default ThreeIsland;

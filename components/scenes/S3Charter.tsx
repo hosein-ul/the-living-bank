@@ -1,15 +1,14 @@
 "use client";
 
 import React, { useRef, useState, useEffect } from "react";
-import { motion, useScroll, useMotionValue, useSpring, useTransform } from "framer-motion";
 import confetti from "canvas-confetti";
 import { useSim } from "../sim/SimProvider";
 import { WaxSeal } from "../atoms/WaxSeal";
 import { CHAPTERS_CONTENT } from "@/content/chapters";
 import { sound } from "@/lib/sound";
-import { EASINGS } from "@/lib/easings";
 import { KineticText } from "../motion/KineticText";
-import { MultiParallaxLayer } from "../motion/MultiParallaxLayer";
+import { VelocitySkew } from "../motion/VelocitySkew";
+import { gsap, ScrollTrigger } from "@/lib/gsap";
 
 export const S3Charter: React.FC = () => {
   const content = CHAPTERS_CONTENT.s3;
@@ -19,45 +18,83 @@ export const S3Charter: React.FC = () => {
   }));
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const cardWrapperRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
+  const sheenRef = useRef<HTMLDivElement>(null);
   const [stampAnimation, setStampAnimation] = useState(false);
-  const [isReduced, setIsReduced] = useState(false);
+
+  // GSAP quickTo setters for 3D card tilt (max 8°)
+  const setRotateXRef = useRef<((val: number) => void) | null>(null);
+  const setRotateYRef = useRef<((val: number) => void) | null>(null);
 
   useEffect(() => {
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setIsReduced(mq.matches);
-    const handler = (e: MediaQueryListEvent) => setIsReduced(e.matches);
-    mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
+    if (cardRef.current) {
+      setRotateXRef.current = gsap.quickTo(cardRef.current, "rotateX", { duration: 0.4, ease: "power2.out" });
+      setRotateYRef.current = gsap.quickTo(cardRef.current, "rotateY", { duration: 0.4, ease: "power2.out" });
+    }
   }, []);
 
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start start", "end end"],
-  });
+  // Section entry clip-path curtain wipe reveal with GSAP ScrollTrigger
+  useEffect(() => {
+    const el = containerRef.current;
+    const cardWrapper = cardWrapperRef.current;
+    if (!el || !cardWrapper) return;
 
-  const parchmentUnroll = useTransform(scrollYProgress, [0, 0.4], [0.85, 1]);
-  const copyY = useTransform(scrollYProgress, [0, 1], [0, 30]);
+    const isReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (isReduced) return;
 
-  // 3D Parallax Tilt
-  const mouseX = useMotionValue(0);
-  const mouseY = useMotionValue(0);
+    const st = gsap.fromTo(
+      cardWrapper,
+      {
+        clipPath: "inset(18% 18% round 24px)",
+        scale: 0.9,
+        opacity: 0.4,
+      },
+      {
+        clipPath: "inset(0% 0% round 8px)",
+        scale: 1.0,
+        opacity: 1.0,
+        ease: "power2.out",
+        scrollTrigger: {
+          trigger: el,
+          start: "top 75%",
+          end: "top 25%",
+          scrub: 0.8,
+        },
+      }
+    );
 
-  const rotateX = useSpring(useTransform(mouseY, [-0.5, 0.5], [14, -14]), { stiffness: 180, damping: 18 });
-  const rotateY = useSpring(useTransform(mouseX, [-0.5, 0.5], [-14, 14]), { stiffness: 180, damping: 18 });
+    return () => {
+      st.scrollTrigger?.kill();
+    };
+  }, []);
 
   const handlePointerMove = (e: React.PointerEvent) => {
-    if (isReduced || !cardRef.current) return;
+    if (!cardRef.current) return;
+    const isReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (isReduced) return;
+
     const rect = cardRef.current.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width - 0.5;
-    const y = (e.clientY - rect.top) / rect.height - 0.5;
-    mouseX.set(x);
-    mouseY.set(y);
+    const nx = (e.clientX - rect.left) / rect.width - 0.5;
+    const ny = (e.clientY - rect.top) / rect.height - 0.5;
+
+    // Max 8 degrees tilt per TASK2.md
+    setRotateXRef.current?.(-ny * 16);
+    setRotateYRef.current?.(nx * 16);
+
+    // Specular sheen highlight positioning
+    if (sheenRef.current) {
+      sheenRef.current.style.opacity = "0.35";
+      sheenRef.current.style.transform = `translate(${nx * 60}px, ${ny * 60}px)`;
+    }
   };
 
   const handlePointerLeave = () => {
-    mouseX.set(0);
-    mouseY.set(0);
+    setRotateXRef.current?.(0);
+    setRotateYRef.current?.(0);
+    if (sheenRef.current) {
+      sheenRef.current.style.opacity = "0";
+    }
   };
 
   const handleClaim = () => {
@@ -67,7 +104,21 @@ export const S3Charter: React.FC = () => {
       sound.playThud();
       sound.playCelebration();
 
-      // Confetti burst with gold paper flakes
+      // GSAP STAMP animation on deed card (scale 1.6 -> 1, blur 8 -> 0)
+      if (cardRef.current) {
+        gsap.fromTo(
+          cardRef.current,
+          { scale: 1.4, filter: "blur(6px)", y: -30 },
+          {
+            scale: 1.0,
+            filter: "blur(0px)",
+            y: 0,
+            duration: 0.64,
+            ease: "back.out(2.0)",
+          }
+        );
+      }
+
       if (typeof window !== "undefined") {
         confetti({
           particleCount: 45,
@@ -83,108 +134,82 @@ export const S3Charter: React.FC = () => {
   return (
     <section
       id="chapter-3"
-      ref={containerRef as unknown as React.RefObject<HTMLElement>}
+      ref={containerRef}
       className="relative min-h-[250vh] border-t border-ink/10 bg-paper select-none"
     >
-      {/* Layer 0: Background Sovereign Seal Watermark drifting [-35, -45] */}
-      <MultiParallaxLayer
-        progress={scrollYProgress}
-        vector={[-35, -45]}
-        className="absolute inset-0 pointer-events-none opacity-10 flex items-center justify-center"
-      >
-        <svg viewBox="0 0 800 800" className="w-[800px] h-[800px] max-w-none">
-          <polygon
-            points="400,50 490,260 720,260 540,400 600,620 400,480 200,620 260,400 80,260 310,260"
-            fill="none"
-            stroke="#b08d2e"
-            strokeWidth="1.2"
-            strokeDasharray="6 6"
-          />
-          <circle cx="400" cy="400" r="320" fill="none" stroke="#b08d2e" strokeWidth="0.8" />
-        </svg>
-      </MultiParallaxLayer>
-
       <div className="sticky top-0 h-screen w-full flex flex-col lg:flex-row items-center justify-between p-6 sm:p-12 lg:p-16 max-w-7xl mx-auto overflow-hidden">
-        {/* Copy Column (~42% desktop) */}
-        <motion.div
-          style={{ y: copyY }}
-          className="w-full lg:w-[42%] flex flex-col justify-center order-2 lg:order-1 mt-6 lg:mt-0 z-10"
-        >
-          <div className="mb-3 flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-gold animate-live-dot" />
-            <KineticText
-              text={`CHAPTER ${content.numeral} · ${content.title}`}
-              as="span"
-              velocityReactive={true}
-              className="font-mono text-xs uppercase tracking-widest text-gold font-semibold"
-            />
-          </div>
+        {/* Copy Column (~42% desktop) with Velocity Skew */}
+        <div className="w-full lg:w-[42%] flex flex-col justify-center order-2 lg:order-1 mt-6 lg:mt-0 z-10">
+          <VelocitySkew maxSkew={1.5}>
+            <div className="mb-3 flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-gold animate-live-dot" />
+              <KineticText
+                text={`CHAPTER ${content.numeral} · ${content.title}`}
+                as="span"
+                velocityReactive={true}
+                className="font-mono text-xs uppercase tracking-widest text-gold font-semibold"
+              />
+            </div>
 
-          <motion.p
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.1, ease: EASINGS.smooth }}
-            className="font-serif text-lg sm:text-xl text-ink leading-relaxed max-w-[34ch] mb-6"
-          >
-            {content.copy}
-          </motion.p>
+            <p className="font-serif text-lg sm:text-xl text-ink leading-relaxed max-w-[34ch] mb-6">
+              {content.copy}
+            </p>
 
-          {/* Gold Fraunces Italic Takeaway with KineticText */}
-          <div className="border-l-2 border-gold pl-4 py-1 mb-8">
-            <KineticText
-              text={`“${content.takeaway}”`}
-              as="p"
-              italicTakeaway={true}
-              delay={0.15}
-              className="font-serif italic text-gold text-sm sm:text-base tracking-wide"
-            />
-          </div>
+            {/* Gold Fraunces Italic Takeaway */}
+            <div className="border-l-2 border-gold pl-4 py-1 mb-8">
+              <KineticText
+                text={`“${content.takeaway}”`}
+                as="p"
+                italicTakeaway={true}
+                delay={0.15}
+                className="font-serif italic text-gold text-sm sm:text-base tracking-wide"
+              />
+            </div>
 
-          {/* Interactive Claim Button */}
-          <div>
-            <button
-              onClick={handleClaim}
-              disabled={claimedCharter}
-              aria-label={content.cta}
-              className={`group relative px-6 py-3.5 rounded font-mono text-xs sm:text-sm uppercase tracking-widest transition-all duration-300 flex items-center gap-3 cursor-pointer shadow-sm ${
-                claimedCharter
-                  ? "bg-paper-deep text-ink-60 border border-gold/40 cursor-default"
-                  : "bg-gold text-paper hover:bg-gold-bright hover:text-ink hover:shadow-md active:scale-95"
-              }`}
-            >
-              <span>{claimedCharter ? "CHARTER CLAIMED · SOULBOUND" : content.cta}</span>
-              {!claimedCharter && (
-                <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">
-                  →
-                </span>
-              )}
-            </button>
-            <span className="block font-mono text-[11px] text-ink-60 mt-2">
-              {content.subcaption}
-            </span>
-          </div>
-        </motion.div>
+            {/* Interactive Claim Button */}
+            <div>
+              <button
+                onClick={handleClaim}
+                disabled={claimedCharter}
+                aria-label={content.cta}
+                className={`group relative px-6 py-3.5 rounded font-mono text-xs sm:text-sm uppercase tracking-widest transition-all duration-300 flex items-center gap-3 cursor-pointer shadow-sm ${
+                  claimedCharter
+                    ? "bg-paper-deep text-ink-60 border border-gold/40 cursor-default"
+                    : "bg-gold text-paper hover:bg-gold-bright hover:text-ink hover:shadow-md active:scale-95"
+                }`}
+              >
+                <span>{claimedCharter ? "CHARTER CLAIMED · SOULBOUND" : content.cta}</span>
+                {!claimedCharter && (
+                  <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">
+                    →
+                  </span>
+                )}
+              </button>
+              <span className="block font-mono text-[11px] text-ink-60 mt-2">
+                {content.subcaption}
+              </span>
+            </div>
+          </VelocitySkew>
+        </div>
 
-        {/* 3D Charter Deed Card (~55% desktop) */}
+        {/* 3D Charter Deed Card (~55% desktop) with Clip-Path Curtain Wipe */}
         <div className="w-full lg:w-[55%] h-[420px] sm:h-[500px] lg:h-[560px] relative order-1 lg:order-2 flex items-center justify-center p-4 perspective-1000">
-          <MultiParallaxLayer
-            progress={scrollYProgress}
-            vector={[40, -25]}
-            className="w-full max-w-[420px]"
+          <div
+            ref={cardWrapperRef}
+            className="w-full max-w-[420px] will-change-transform"
           >
-            <motion.div
+            <div
               ref={cardRef}
-              style={{
-                rotateX: isReduced ? 0 : rotateX,
-                rotateY: isReduced ? 0 : rotateY,
-                scale: isReduced ? 1 : parchmentUnroll,
-                transformStyle: "preserve-3d",
-              }}
               onPointerMove={handlePointerMove}
               onPointerLeave={handlePointerLeave}
-              className="relative w-full aspect-[1/1.38] bg-[#fbf9f4] border-2 border-gold/60 rounded-lg p-6 sm:p-8 flex flex-col justify-between shadow-xl transition-shadow duration-300"
+              className="relative w-full aspect-[1/1.38] bg-[#fbf9f4] border-2 border-gold/60 rounded-lg p-6 sm:p-8 flex flex-col justify-between shadow-xl transition-shadow duration-300 transform-style-3d overflow-hidden will-change-transform"
             >
+              {/* Specular sheen reflection overlay */}
+              <div
+                ref={sheenRef}
+                className="absolute -inset-10 bg-gradient-to-tr from-transparent via-white/50 to-transparent opacity-0 pointer-events-none transition-opacity duration-300"
+              />
+
               {/* Watermark Deed Border */}
               <div className="absolute inset-2 border border-dashed border-gold/30 rounded pointer-events-none" />
 
@@ -204,7 +229,7 @@ export const S3Charter: React.FC = () => {
                 </div>
               </div>
 
-              {/* Body text & Calligraphy */}
+              {/* Body text */}
               <div className="relative z-10 my-4 space-y-3 font-serif text-xs sm:text-sm text-ink-60 leading-relaxed">
                 <p>
                   Be it known that the holder of this deed is authorized to operate a banking charter within the sovereign onchain central bank.
@@ -243,8 +268,8 @@ export const S3Charter: React.FC = () => {
                   />
                 </div>
               </div>
-            </motion.div>
-          </MultiParallaxLayer>
+            </div>
+          </div>
         </div>
       </div>
     </section>

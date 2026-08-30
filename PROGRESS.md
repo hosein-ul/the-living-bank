@@ -103,3 +103,62 @@ Files touched:
 10. **Verbatim copy**: PASS (`content/chapters.ts` matches §7 verbatim strings without alteration or paraphrasing).
 11. **Chapter rail navigation & gold takeaways**: PASS (Rail reaches and highlights chapters 0–X; all 10 chapter takeaways render in gold Fraunces italic).
 12. **Epilogue disclaimer**: PASS (`"A fan-made interactive explanation. Not affiliated. Nothing here is financial advice."` present verbatim).
+
+---
+
+## Motion Overhaul (TASK2) — DONE 2026-08-30
+Gate result: `npx tsc --noEmit` clean (0 errors), `NODE_OPTIONS=--max-old-space-size=1024 npm run build` passed cleanly. 0 banned hues found. Full GSAP ScrollTrigger + Lenis ticker sync, Three.js scroll orbit, canvas 2D physics, and all 6 visual bugs resolved.
+
+### Architecture & Engine Upgrades:
+- Registered GSAP, ScrollTrigger, and useGSAP centrally in `lib/gsap.ts`.
+- Integrated Lenis smooth scroll into GSAP ticker (`gsap.ticker.add((t) => lenis.raf(t * 1000)); gsap.ticker.lagSmoothing(0)`), synchronized `lenis.on('scroll', ScrollTrigger.update)`, exposed velocity for kinetic skewing.
+- Added top 2px gold scroll progress hairline indicator (`components/chrome/ScrollProgressHairline.tsx`).
+- Suppressed native browser scrollbar across Firefox/WebKit/IE to prevent collisions with Chapter Rail.
+
+### 10-Chapter Motion Techniques:
+- **S0 Cover**: GSAP SplitChars per-character STAMP-in with blur on title, continuous idle 3D coin rotation (`gsap.to` yoyo), pointer-parallax orbital rings with `gsap.quickTo`.
+- **S1 Island**: Three.js scroll orbit (`theta = p * Math.PI * 1.6`) scrubbed with GSAP ScrollTrigger proxy `{ p: 0 }`, fog density & gold rim-light modulation, DPR capped at 1.5, rAF paused when offscreen.
+- **S2 Gate**: Canvas 2D coin queue (~30-50 coins) driven by lever position and `lenis.velocity`, `gsap.quickTo` lever drag, proxy counter GSAP tween on NET ETH count, dynamic background tinting.
+- **S3 Charter**: 3D perspective tilt deed with `gsap.quickTo` on pointer (max 8°), clip-path curtain wipe section entry reveal, STAMP slam animation on claim.
+- **S4 Furnace**: SVG Dutch auction exponential decay curve path tracing (`stroke-dashoffset` scrubbed), marker sliding on curve, EMBER 7-particle burst on BUY LICENSE, custom SVG/DOM branch pip indicators.
+- **S5 Dial**: Monumental brass dial with 4-step stepped ratchet on inflow (420ms each) vs 240ms instant SLAM on outflow with 120ms GSAP scene shake, regime badge scale punch.
+- **S6 Vaults**: Fee coins routed along SVG paths via `getPointAtLength` scrubbed by GSAP, staggered gold bar stacks, POL lake scrubbed water level rise, buyback robot EMBER puffs every 900ms in contraction.
+- **S7 Run**: Sticky card stacking on banker cards (scale down 0.95/0.90 + dimming), quadratic toll arc path tracing, STAY vs WITHDRAW branching, STAMP receipt.
+- **S8 Ghost**: Floating Z glyphs, wax seal cracking into 3 SVG shard paths with physics scatter + SLAM shake upon REPORT, stream rate acceleration.
+- **S9 Ledger**: Rolling-digit odometer digit column roll scrubbed into view, 5 recap frames revealed with staggered parallax, hard cap ticks down on burn.
+- **S10 Epilogue**: GSAP STAMP wax seal trigger on scroll into view, session metrics count up, client-side 1080×1080 canvas share card PNG export.
+- **Global Chrome**: Subtle copy column velocity skew (max 1.5°) via `VelocitySkew.tsx`, 2px gold hairline progress, smooth chapter rail.
+
+### 6 Bugs Resolved:
+1. **Hero overlap**: Placed $STANDARD coin cleanly with margin above wordmark, anchored bottom-right wax seal without text obstruction.
+2. **S2 lever label**: Moved "DRAG THE LEVER" label above the track with padding to prevent brass handle overlap.
+3. **S4 tofu boxes**: Replaced unsupported Unicode box glyphs with styled DOM/SVG branch pip rectangles.
+4. **Scrollbar collision**: Suppressed native scrollbar in CSS (`scrollbar-width: none` and `::-webkit-scrollbar { display: none }`).
+5. **Dead space after Chapter VII**: Fixed card stack container height budgeting and eliminated trailing empty space.
+6. **Sticky scrollytelling**: Ensured all pinned sections use clean GSAP ScrollTrigger scrubbing and pinning without breaking transforms or overflow constraints.
+
+### Files Touched in TASK2:
+- `package.json`
+- `lib/gsap.ts`
+- `app/globals.css`
+- `app/page.tsx`
+- `components/chrome/SmoothScroll.tsx`
+- `components/chrome/ScrollProgressHairline.tsx`
+- `components/motion/SplitChars.tsx`
+- `components/motion/VelocitySkew.tsx`
+- `components/motion/index.ts`
+- `components/scenes/S0Cover.tsx`
+- `components/scenes/ThreeIsland.tsx`
+- `components/scenes/S1Island.tsx`
+- `components/scenes/S2Gate.tsx`
+- `components/scenes/S3Charter.tsx`
+- `components/scenes/S4Furnace.tsx`
+- `components/atoms/Dial.tsx`
+- `components/scenes/S5Dial.tsx`
+- `components/scenes/S6Vaults.tsx`
+- `components/scenes/S7Run.tsx`
+- `components/scenes/S8Ghost.tsx`
+- `components/atoms/Odometer.tsx`
+- `components/scenes/S9Ledger.tsx`
+- `components/scenes/S10Epilogue.tsx`
+- `PROGRESS.md`
