@@ -1,14 +1,13 @@
 "use client";
 
-import React, { useState, useRef } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import React, { useRef } from "react";
 import { useSim } from "../sim/SimProvider";
 import { Dial } from "../atoms/Dial";
 import { CHAPTERS_CONTENT } from "@/content/chapters";
 import { sound } from "@/lib/sound";
-import { EASINGS } from "@/lib/easings";
 import { KineticText } from "../motion/KineticText";
-import { MultiParallaxLayer } from "../motion/MultiParallaxLayer";
+import { gsap, ScrollTrigger } from "@/lib/gsap";
+
 
 export const S5Dial: React.FC = () => {
   const content = CHAPTERS_CONTENT.s5;
@@ -21,19 +20,22 @@ export const S5Dial: React.FC = () => {
   }));
 
   const containerRef = useRef<HTMLDivElement>(null);
-  const [isShaking, setIsShaking] = useState(false);
-
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start start", "end end"],
-  });
-
-  const copyY = useTransform(scrollYProgress, [0, 1], [0, 30]);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const badgeRef = useRef<HTMLSpanElement>(null);
 
   const handleInflow = () => {
     advanceEpoch(0.35);
     setRegime("EXPANSION");
     sound.playRatchet();
+
+    // Tiny scale punch on regime badge
+    if (badgeRef.current) {
+      gsap.fromTo(
+        badgeRef.current,
+        { scale: 1.25 },
+        { scale: 1.0, duration: 0.3, ease: "back.out(2)" }
+      );
+    }
   };
 
   const handleOutflow = () => {
@@ -41,59 +43,54 @@ export const S5Dial: React.FC = () => {
     setRegime("CONTRACTION");
     sound.playThud();
 
-    setIsShaking(true);
-    setTimeout(() => setIsShaking(false), 120);
+    // 120ms GSAP scene shake on outflow cut per TASK2.md
+    if (stageRef.current) {
+      gsap.fromTo(
+        stageRef.current,
+        { x: -5, y: 3 },
+        {
+          x: 0,
+          y: 0,
+          duration: 0.12,
+          ease: "rough({strength: 2, points: 10, template: power2.inOut, taper: 'out', randomize: true})",
+          clearProps: "transform",
+        }
+      );
+    }
+
+    if (badgeRef.current) {
+      gsap.fromTo(
+        badgeRef.current,
+        { scale: 1.3 },
+        { scale: 1.0, duration: 0.3, ease: "back.out(2)" }
+      );
+    }
   };
 
   return (
     <section
       id="chapter-5"
-      ref={containerRef as unknown as React.RefObject<HTMLElement>}
-      className={`relative min-h-[260vh] border-t border-ink/10 bg-paper transition-transform select-none ${
-        isShaking ? "animate-shake" : ""
-      }`}
+      ref={containerRef}
+      className="relative min-h-[260vh] border-t border-ink/10 bg-paper select-none"
     >
-      {/* Layer 0: Background Dial Compass Linework drifting [-40, -40] */}
-      <MultiParallaxLayer
-        progress={scrollYProgress}
-        vector={[-40, -40]}
-        className="absolute inset-0 pointer-events-none opacity-10 flex items-center justify-center"
-      >
-        <svg viewBox="0 0 800 800" className="w-[800px] h-[800px] max-w-none">
-          <circle cx="400" cy="400" r="350" fill="none" stroke="#b08d2e" strokeWidth="1" strokeDasharray="8 8" />
-          <line x1="400" y1="50" x2="400" y2="750" stroke="#b08d2e" strokeWidth="0.8" />
-          <line x1="50" y1="400" x2="750" y2="400" stroke="#b08d2e" strokeWidth="0.8" />
-          <circle cx="400" cy="400" r="200" fill="none" stroke="#1a1a18" strokeWidth="0.6" strokeDasharray="4 4" />
-        </svg>
-      </MultiParallaxLayer>
-
       <div className="sticky top-0 h-screen w-full flex flex-col lg:flex-row items-center justify-between p-6 sm:p-12 lg:p-16 max-w-7xl mx-auto overflow-hidden">
         {/* Copy Column (~42% desktop) */}
-        <motion.div
-          style={{ y: copyY }}
-          className="w-full lg:w-[42%] flex flex-col justify-center order-2 lg:order-1 mt-6 lg:mt-0 z-10"
-        >
+        <div className="w-full lg:w-[42%] flex flex-col justify-center order-2 lg:order-1 mt-6 lg:mt-0 z-10">
           <div className="mb-3 flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-gold animate-live-dot" />
             <KineticText
               text={`CHAPTER ${content.numeral} · ${content.title}`}
               as="span"
-              velocityReactive={true}
+              velocityReactive={false}
               className="font-mono text-xs uppercase tracking-widest text-gold font-semibold"
             />
           </div>
 
-          <motion.p
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.1, ease: EASINGS.smooth }}
-            className="font-serif text-lg sm:text-xl text-ink leading-relaxed max-w-[34ch] mb-6"
-          >
+          <p className="font-serif text-lg sm:text-xl text-ink leading-relaxed max-w-[34ch] mb-6">
             {content.copy}
-          </motion.p>
+          </p>
 
-          {/* Gold Fraunces Italic Takeaway with KineticText */}
+          {/* Gold Fraunces Italic Takeaway */}
           <div className="border-l-2 border-gold pl-4 py-1">
             <KineticText
               text={`“${content.takeaway}”`}
@@ -103,17 +100,21 @@ export const S5Dial: React.FC = () => {
               className="font-serif italic text-gold text-sm sm:text-base tracking-wide"
             />
           </div>
-        </motion.div>
+        </div>
 
         {/* Stage (~56% desktop) */}
-        <div className="w-full lg:w-[56%] flex flex-col items-center justify-center order-1 lg:order-2 bg-paper-deep/50 p-6 sm:p-8 rounded-lg border border-ink/15 shadow-[0_12px_32px_rgba(26,26,24,0.06)]">
+        <div
+          ref={stageRef}
+          className="w-full lg:w-[56%] flex flex-col items-center justify-center order-1 lg:order-2 p-4 will-change-transform"
+        >
           {/* Regime Badge */}
           <div className="mb-4 flex items-center gap-2.5">
             <span className="font-mono text-[10px] sm:text-xs uppercase text-ink-60 tracking-wider font-semibold">
               Bank Regime:
             </span>
             <span
-              className={`px-3 py-1 rounded text-xs font-mono font-bold tracking-wider uppercase transition-colors duration-240 shadow-sm ${
+              ref={badgeRef}
+              className={`px-3 py-1 rounded text-xs font-mono font-bold tracking-wider uppercase transition-colors duration-240 shadow-sm inline-block will-change-transform ${
                 regime === "EXPANSION"
                   ? "bg-green text-paper"
                   : "bg-red text-paper"

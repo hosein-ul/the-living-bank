@@ -37,10 +37,14 @@
 import React, { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
+import { ScrollTrigger } from "@/lib/gsap";
 
 interface ThreeIslandProps {
-  progress: number; // 0 to 1
-  activeIndex: number; // 0 to 5
+  progress?: number; // 0 to 1
+  activeIndex?: number; // 0 to 5
+  sectionTriggerId?: string;
+  onActiveIndexChange?: (index: number) => void;
+  className?: string;
 }
 
 // Exponential damp helper: buttery smooth decay
@@ -306,20 +310,30 @@ function createMergedLionGeometry(): THREE.BufferGeometry {
   return lionGeo;
 }
 
-export const ThreeIsland: React.FC<ThreeIslandProps> = ({ progress, activeIndex }) => {
+export const ThreeIsland: React.FC<ThreeIslandProps> = ({
+  progress,
+  activeIndex,
+  sectionTriggerId = "chapter-1",
+  onActiveIndexChange,
+  className = "",
+}) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const mouseRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const [webGLSupported, setWebGLSupported] = useState<boolean>(true);
 
-  const progressRef = useRef<number>(progress);
-  const activeIndexRef = useRef<number>(activeIndex);
+  const internalProgressRef = useRef<number>(progress ?? 0);
+  const activeIdxRef = useRef<number>(activeIndex ?? 0);
 
   useEffect(() => {
-    progressRef.current = progress;
+    if (progress !== undefined) {
+      internalProgressRef.current = progress;
+    }
   }, [progress]);
 
   useEffect(() => {
-    activeIndexRef.current = activeIndex;
+    if (activeIndex !== undefined) {
+      activeIdxRef.current = activeIndex;
+    }
   }, [activeIndex]);
 
   useEffect(() => {
@@ -337,6 +351,26 @@ export const ThreeIsland: React.FC<ThreeIslandProps> = ({ progress, activeIndex 
       }
     };
     reducedMediaQuery.addEventListener("change", handleReducedChange);
+
+    // Attach ScrollTrigger if sectionTriggerId is present
+    let scrollTriggerInstance: ScrollTrigger | null = null;
+    const targetElement = document.getElementById(sectionTriggerId);
+    if (targetElement) {
+      scrollTriggerInstance = ScrollTrigger.create({
+        trigger: targetElement,
+        start: "top top",
+        end: "bottom bottom",
+        scrub: true,
+        onUpdate: (self) => {
+          internalProgressRef.current = self.progress;
+          const newIdx = Math.min(5, Math.floor(self.progress * 6));
+          if (newIdx !== activeIdxRef.current) {
+            activeIdxRef.current = newIdx;
+            onActiveIndexChange?.(newIdx);
+          }
+        },
+      });
+    }
 
     // Setup Three.js Scene
     const scene = new THREE.Scene();
@@ -469,7 +503,6 @@ export const ThreeIsland: React.FC<ThreeIslandProps> = ({ progress, activeIndex 
 
     // --- ROOT BANK GROUP ---
     const bankGroup = new THREE.Group();
-    // Shift slightly forward so building center is perfectly balanced
     bankGroup.position.set(0, 0, 0);
     scene.add(bankGroup);
 
@@ -845,7 +878,7 @@ export const ThreeIsland: React.FC<ThreeIslandProps> = ({ progress, activeIndex 
       const dt = Math.min(clock.getDelta(), 0.1);
       const elapsed = clock.getElapsedTime();
 
-      const curProgress = Math.max(0, Math.min(1, progressRef.current));
+      const curProgress = Math.max(0, Math.min(1, internalProgressRef.current));
 
       if (isReducedMotion) {
         // Freeze camera & orbit at start view for reduced-motion accessibility
@@ -931,6 +964,9 @@ export const ThreeIsland: React.FC<ThreeIslandProps> = ({ progress, activeIndex 
 
     return () => {
       reducedMediaQuery.removeEventListener("change", handleReducedChange);
+      if (scrollTriggerInstance) {
+        scrollTriggerInstance.kill();
+      }
       window.removeEventListener("pointermove", handlePointerMove);
       window.removeEventListener("resize", handleResize);
       cancelAnimationFrame(animId);
@@ -982,11 +1018,11 @@ export const ThreeIsland: React.FC<ThreeIslandProps> = ({ progress, activeIndex 
       flagMatLeft.dispose();
       flagMatRight.dispose();
     };
-  }, []);
+  }, [sectionTriggerId, onActiveIndexChange]);
 
   if (!webGLSupported) {
     return (
-      <div className="w-full h-full flex flex-col items-center justify-center p-6 bg-paper-deep text-center select-none">
+      <div className={`w-full h-full flex flex-col items-center justify-center p-6 bg-paper-deep text-center select-none ${className}`}>
         <svg viewBox="0 0 200 160" className="w-48 h-36 mb-2 drop-shadow-sm">
           <polygon points="100,20 180,60 180,110 100,150 20,110 20,60" fill="#e9e4d8" stroke="#1a1a18" strokeWidth="2" />
           <rect x="85" y="60" width="30" height="40" fill="#c9a961" stroke="#b08d2e" strokeWidth="1.5" />
@@ -1001,7 +1037,7 @@ export const ThreeIsland: React.FC<ThreeIslandProps> = ({ progress, activeIndex 
   }
 
   return (
-    <div className="relative w-full h-full min-h-[320px] overflow-hidden">
+    <div className={`relative w-full h-full min-h-[320px] overflow-hidden ${className}`}>
       {/* Soft radial gradient background: #f4f1ea center -> #e8e0d0 edges */}
       <div
         className="absolute inset-0 pointer-events-none"

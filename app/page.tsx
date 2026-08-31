@@ -6,6 +6,7 @@ import { EpochCounter } from "@/components/chrome/EpochCounter";
 import { BrassPlaque } from "@/components/chrome/BrassPlaque";
 import { ChapterRail } from "@/components/chrome/ChapterRail";
 import { SoundToggle } from "@/components/chrome/SoundToggle";
+import { ScrollProgressHairline } from "@/components/chrome/ScrollProgressHairline";
 import { S0Cover } from "@/components/scenes/S0Cover";
 import {
   S1Island,
@@ -24,6 +25,9 @@ export default function Home() {
   return (
     <SimProvider>
       <div className="relative min-h-screen bg-paper text-ink selection:bg-gold-bright selection:text-ink">
+        {/* Top 2px Gold Scroll Progress Hairline */}
+        <ScrollProgressHairline />
+
         {/* Fixed HUD elements */}
         <EpochCounter />
         <SoundToggle />

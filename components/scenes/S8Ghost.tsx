@@ -1,49 +1,85 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 import confetti from "canvas-confetti";
 import { useSim } from "../sim/SimProvider";
 import { NPC, NPCState } from "../atoms/NPC";
-import { WaxSeal } from "../atoms/WaxSeal";
 import { Receipt } from "../atoms/Receipt";
-import { formatNumber, formatRate } from "../sim/formatters";
+import { formatRate } from "../sim/formatters";
 import { CHAPTERS_CONTENT } from "@/content/chapters";
 import { sound } from "@/lib/sound";
-import { EASINGS } from "@/lib/easings";
 import { KineticText } from "../motion/KineticText";
-import { MultiParallaxLayer } from "../motion/MultiParallaxLayer";
+import { gsap, ScrollTrigger } from "@/lib/gsap";
+
 
 export const S8Ghost: React.FC = () => {
   const content = CHAPTERS_CONTENT.s8;
   const {
-    ghostsReported,
     accrualRate,
     reportGhost,
   } = useSim((s) => ({
-    ghostsReported: s.ghostsReported,
     accrualRate: s.accrualRate,
     reportGhost: s.reportGhost,
   }));
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const ghostSealRef = useRef<HTMLDivElement>(null);
+  const shard1Ref = useRef<SVGPathElement>(null);
+  const shard2Ref = useRef<SVGPathElement>(null);
+  const shard3Ref = useRef<SVGPathElement>(null);
+
   const [hasReported, setHasReported] = useState<boolean>(false);
-  const [bountyData, setBountyData] = useState<{ bounty: number; forfeited: number } | null>(null);
-
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start start", "end end"],
-  });
-
-  const copyY = useTransform(scrollYProgress, [0, 1], [0, 30]);
 
   const handleReport = () => {
     if (!hasReported) {
       setHasReported(true);
       sound.playShatter();
       sound.playThud();
-      const res = reportGhost();
-      setBountyData(res);
+      reportGhost();
+
+      // GSAP SLAM shake on the stage
+      if (stageRef.current) {
+        gsap.fromTo(
+          stageRef.current,
+          { x: -6, y: 4 },
+          {
+            x: 0,
+            y: 0,
+            duration: 0.14,
+            ease: "rough({strength: 2.5, points: 12, template: power2.inOut, taper: 'out', randomize: true})",
+            clearProps: "transform",
+          }
+        );
+      }
+
+      // GSAP Physics-ish Scatter of 3 SVG Shard Paths
+      if (shard1Ref.current && shard2Ref.current && shard3Ref.current) {
+        gsap.to(shard1Ref.current, {
+          x: -28,
+          y: -22,
+          rotate: -35,
+          opacity: 0,
+          duration: 0.7,
+          ease: "power3.out",
+        });
+        gsap.to(shard2Ref.current, {
+          x: 24,
+          y: -18,
+          rotate: 30,
+          opacity: 0,
+          duration: 0.7,
+          ease: "power3.out",
+        });
+        gsap.to(shard3Ref.current, {
+          x: 0,
+          y: 32,
+          rotate: 15,
+          opacity: 0,
+          duration: 0.7,
+          ease: "power3.out",
+        });
+      }
 
       if (typeof window !== "undefined") {
         confetti({
@@ -64,48 +100,27 @@ export const S8Ghost: React.FC = () => {
   return (
     <section
       id="chapter-8"
-      ref={containerRef as unknown as React.RefObject<HTMLElement>}
-      className="relative min-h-[260vh] border-t border-ink/10 bg-[#eae5d8] select-none"
+      ref={containerRef}
+      className="relative min-h-[240vh] border-t border-ink/10 bg-[#eae5d8] select-none"
     >
-      {/* Layer 0: Background Dormant Hourglass Linework drifting [-30, -50] */}
-      <MultiParallaxLayer
-        progress={scrollYProgress}
-        vector={[-30, -50]}
-        className="absolute inset-0 pointer-events-none opacity-10 flex items-center justify-center"
-      >
-        <svg viewBox="0 0 800 800" className="w-[800px] h-[800px] max-w-none">
-          <polygon points="300,200 500,200 400,400 500,600 300,600 400,400" fill="none" stroke="#a33b2e" strokeWidth="1" strokeDasharray="6 6" />
-          <circle cx="400" cy="400" r="280" fill="none" stroke="#b08d2e" strokeWidth="0.8" />
-        </svg>
-      </MultiParallaxLayer>
-
       <div className="sticky top-0 h-screen w-full flex flex-col lg:flex-row items-center justify-between p-6 sm:p-12 lg:p-16 max-w-7xl mx-auto overflow-hidden">
         {/* Copy Column (~42% desktop) */}
-        <motion.div
-          style={{ y: copyY }}
-          className="w-full lg:w-[42%] flex flex-col justify-center order-2 lg:order-1 mt-6 lg:mt-0 z-10"
-        >
+        <div className="w-full lg:w-[42%] flex flex-col justify-center order-2 lg:order-1 mt-6 lg:mt-0 z-10">
           <div className="mb-3 flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-gold animate-live-dot" />
             <KineticText
               text={`CHAPTER ${content.numeral} · ${content.title}`}
               as="span"
-              velocityReactive={true}
+              velocityReactive={false}
               className="font-mono text-xs uppercase tracking-widest text-gold font-semibold"
             />
           </div>
 
-          <motion.p
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.1, ease: EASINGS.smooth }}
-            className="font-serif text-lg sm:text-xl text-ink leading-relaxed max-w-[34ch] mb-6"
-          >
+          <p className="font-serif text-lg sm:text-xl text-ink leading-relaxed max-w-[34ch] mb-6">
             {content.copy}
-          </motion.p>
+          </p>
 
-          {/* Gold Fraunces Italic Takeaway with KineticText */}
+          {/* Gold Fraunces Italic Takeaway */}
           <div className="border-l-2 border-gold pl-4 py-1">
             <KineticText
               text={`“${content.takeaway}”`}
@@ -115,12 +130,15 @@ export const S8Ghost: React.FC = () => {
               className="font-serif italic text-gold text-sm sm:text-base tracking-wide"
             />
           </div>
-        </motion.div>
+        </div>
 
         {/* Stage (~56% desktop): Dimmed Lobby with Ghost NPC */}
-        <div className="w-full lg:w-[56%] flex flex-col items-center justify-center bg-paper-deep/70 p-6 sm:p-8 rounded-lg border border-ink/20 shadow-[0_12px_32px_rgba(26,26,24,0.08)] order-1 lg:order-2">
+        <div
+          ref={stageRef}
+          className="w-full lg:w-[56%] flex flex-col items-center justify-center p-4 order-1 lg:order-2 will-change-transform"
+        >
           {/* Wall Poster: DORMANT 30 DAYS — BOUNTY 2% */}
-          <div className="w-full flex items-center justify-between p-3.5 bg-paper rounded-lg border border-gold/50 mb-5 shadow-sm">
+          <div className="w-full flex items-center justify-between py-2.5 px-3 border-t border-b border-gold/40 mb-5">
             <div className="flex items-center gap-3">
               <div className="w-2.5 h-2.5 rounded-full bg-red animate-pulse" />
               <span className="font-mono text-xs font-bold text-ink uppercase tracking-wider">
@@ -133,7 +151,7 @@ export const S8Ghost: React.FC = () => {
           </div>
 
           {/* NPCs in Dimmed Lobby: 1 Dormant Ghost Banker */}
-          <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 w-full mb-5">
+          <div className="grid grid-cols-4 gap-3 w-full mb-5">
             {Array.from({ length: 8 }).map((_, idx) => {
               const isGhost = idx === 3;
               const state: NPCState = isGhost
@@ -152,9 +170,37 @@ export const S8Ghost: React.FC = () => {
                     className={isGhost && !hasReported ? "ring-2 ring-red/50 shadow-md" : ""}
                   />
 
-                  {isGhost && hasReported && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-red/20 rounded backdrop-blur-[1px]">
-                      <WaxSeal text="CHARTER" subtext="REVOKED" size={54} cracked animateStamp />
+                  {/* 3 SVG Shards that fly apart on REPORT */}
+                  {isGhost && (
+                    <div
+                      ref={ghostSealRef}
+                      className={`absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity ${
+                        hasReported ? "opacity-100" : "opacity-0"
+                      }`}
+                    >
+                      <svg viewBox="0 0 60 60" className="w-14 h-14 overflow-visible">
+                        <path
+                          ref={shard1Ref}
+                          d="M 30 10 L 15 30 L 30 30 Z"
+                          fill="#a33b2e"
+                          stroke="#1a1a18"
+                          strokeWidth="1"
+                        />
+                        <path
+                          ref={shard2Ref}
+                          d="M 30 10 L 45 30 L 30 30 Z"
+                          fill="#a33b2e"
+                          stroke="#1a1a18"
+                          strokeWidth="1"
+                        />
+                        <path
+                          ref={shard3Ref}
+                          d="M 15 30 L 45 30 L 30 50 Z"
+                          fill="#8c6d1d"
+                          stroke="#1a1a18"
+                          strokeWidth="1"
+                        />
+                      </svg>
                     </div>
                   )}
                 </div>

@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
-import { motion } from "framer-motion";
+import React, { useState, useRef, useEffect } from "react";
 import confetti from "canvas-confetti";
 import { useSim } from "../sim/SimProvider";
 import { WaxSeal } from "../atoms/WaxSeal";
@@ -9,8 +8,8 @@ import { Receipt } from "../atoms/Receipt";
 import { formatNumber } from "../sim/formatters";
 import { CHAPTERS_CONTENT } from "@/content/chapters";
 import { sound } from "@/lib/sound";
-import { EASINGS } from "@/lib/easings";
 import { KineticText } from "../motion/KineticText";
+import { gsap, ScrollTrigger } from "@/lib/gsap";
 
 export const S10Epilogue: React.FC = () => {
   const content = CHAPTERS_CONTENT.s10;
@@ -30,7 +29,40 @@ export const S10Epilogue: React.FC = () => {
     runRewardOrFeePaid: s.runRewardOrFeePaid,
   }));
 
+  const containerRef = useRef<HTMLDivElement>(null);
+  const sealRef = useRef<HTMLDivElement>(null);
   const [exporting, setExporting] = useState<boolean>(false);
+
+  // GSAP STAMP animation on Wax Seal on scroll into view
+  useEffect(() => {
+    const el = sealRef.current;
+    if (!el) return;
+
+    const isReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (isReduced) return;
+
+    const st = gsap.fromTo(
+      el,
+      { scale: 2.2, filter: "blur(8px)", opacity: 0, rotate: -15 },
+      {
+        scale: 1,
+        filter: "blur(0px)",
+        opacity: 1,
+        rotate: 0,
+        duration: 0.64,
+        ease: "back.out(2)",
+        scrollTrigger: {
+          trigger: el,
+          start: "top 80%",
+          toggleActions: "play none none none",
+        },
+      }
+    );
+
+    return () => {
+      st.scrollTrigger?.kill();
+    };
+  }, []);
 
   // Client-side HTML5 Canvas 1080x1080 PNG Share Card Exporter
   const handleExportShareCard = async () => {
@@ -52,7 +84,7 @@ export const S10Epilogue: React.FC = () => {
       try {
         await document.fonts.ready;
       } catch {
-        // Fallback gracefully to system fonts
+        // Fallback gracefully
       }
     }
 
@@ -124,7 +156,7 @@ export const S10Epilogue: React.FC = () => {
     ctx.font = 'bold 24px "Fraunces", Georgia, serif';
     ctx.fillText("THE LIVING BANK — SESSION RECEIPT", 540, 392);
 
-    // Subtle divider inside receipt
+    // Divider inside receipt
     ctx.strokeStyle = "rgba(26, 26, 24, 0.15)";
     ctx.lineWidth = 1;
     ctx.beginPath();
@@ -170,7 +202,7 @@ export const S10Epilogue: React.FC = () => {
       ctx.fillText(r.value, 900, y);
     });
 
-    // Gold Wax Seal Stamp bottom right in canvas receipt
+    // Gold Wax Seal Stamp in receipt
     ctx.beginPath();
     ctx.arc(810, 715, 52, 0, Math.PI * 2);
     ctx.fillStyle = "#b08d2e";
@@ -196,7 +228,7 @@ export const S10Epilogue: React.FC = () => {
     ctx.fillStyle = "#b08d2e";
     ctx.fillText("“Supply has one direction: down.”", 540, 905);
 
-    // Verbatim Disclaimer on Share Card
+    // Verbatim Disclaimer
     ctx.fillStyle = "rgba(26, 26, 24, 0.6)";
     ctx.font = '13px "IBM Plex Mono", monospace';
     ctx.fillText(
@@ -219,47 +251,30 @@ export const S10Epilogue: React.FC = () => {
   return (
     <section
       id="chapter-10"
-      className="relative min-h-screen py-24 px-6 sm:px-12 lg:px-16 border-t border-ink/10 flex flex-col items-center justify-center bg-paper text-center"
+      ref={containerRef}
+      className="relative min-h-screen py-24 px-6 sm:px-12 lg:px-16 border-t border-ink/10 flex flex-col items-center justify-center bg-paper text-center select-none"
     >
       <div className="w-full max-w-4xl mx-auto flex flex-col items-center">
-        {/* Seal Stamp */}
-        <motion.div
-          initial={{ scale: 1.8, filter: "blur(6px)", opacity: 0 }}
-          whileInView={{ scale: 1, filter: "blur(0px)", opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.64, ease: EASINGS.stamp }}
-          className="mb-6"
-        >
-          <WaxSeal text="EXPERIENCED" subtext="RESERVE" size={96} animateStamp />
-        </motion.div>
+        {/* Seal Stamp with GSAP STAMP Trigger */}
+        <div ref={sealRef} className="mb-6 inline-block will-change-transform">
+          <WaxSeal text="EXPERIENCED" subtext="RESERVE" size={96} animateStamp={false} />
+        </div>
 
         {/* Title with Word-Masked Kinetic Typography */}
         <KineticText
           text={content.title}
           as="h2"
-          velocityReactive={true}
+          velocityReactive={false}
           className="font-serif text-3xl sm:text-5xl font-semibold tracking-tight text-ink mb-4 justify-center"
         />
 
         {/* Copy (Verbatim) */}
-        <motion.p
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.1, ease: EASINGS.smooth }}
-          className="font-serif text-base sm:text-xl text-ink leading-relaxed max-w-[34ch] mx-auto mb-8"
-        >
+        <p className="font-serif text-base sm:text-xl text-ink leading-relaxed max-w-[34ch] mx-auto mb-8">
           {content.copy}
-        </motion.p>
+        </p>
 
         {/* Paper Receipt Summary Card */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.2, ease: EASINGS.smooth }}
-          className="mb-8 w-full max-w-md"
-        >
+        <div className="mb-8 w-full max-w-md">
           <Receipt
             title={content.receiptTitle}
             lines={[
@@ -282,7 +297,7 @@ export const S10Epilogue: React.FC = () => {
               },
             ]}
           />
-        </motion.div>
+        </div>
 
         {/* Export Button */}
         <div className="mb-12">

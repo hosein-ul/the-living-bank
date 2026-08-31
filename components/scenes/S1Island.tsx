@@ -1,21 +1,20 @@
 "use client";
 
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { CHAPTERS_CONTENT } from "@/content/chapters";
 import { EASINGS } from "@/lib/easings";
 import { sound } from "@/lib/sound";
 import { KineticText } from "../motion/KineticText";
-import { MultiParallaxLayer } from "../motion/MultiParallaxLayer";
 
 const DynamicThreeIsland = dynamic(() => import("./ThreeIsland"), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-full min-h-[380px] flex flex-col items-center justify-center bg-paper-deep/40 rounded border border-ink/10">
+    <div className="w-full h-full min-h-[380px] flex flex-col items-center justify-center bg-transparent">
       <div className="w-9 h-9 rounded-full border-2 border-gold border-t-transparent animate-spin mb-3" />
-      <span className="font-mono text-xs text-ink-60 uppercase tracking-widest">
-        Summoning Island Geometry...
+      <span className="font-mono text-xs text-gold uppercase tracking-widest">
+        Summoning Neoclassical Bank...
       </span>
     </div>
   ),
@@ -24,29 +23,7 @@ const DynamicThreeIsland = dynamic(() => import("./ThreeIsland"), {
 export const S1Island: React.FC = () => {
   const content = CHAPTERS_CONTENT.s1;
   const containerRef = useRef<HTMLDivElement>(null);
-  const [activeIdx, setActiveIdx] = useState(0);
-  const [scrollProgress, setScrollProgress] = useState(0);
-
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start start", "end end"],
-  });
-
-  // Parallax transforms for copy & 3D scene container
-  const copyY = useTransform(scrollYProgress, [0, 1], [0, 40]);
-  const sceneScale = useTransform(scrollYProgress, [0, 0.5, 1], [0.95, 1.02, 0.98]);
-
-  useEffect(() => {
-    let lastIdx = -1;
-    return scrollYProgress.on("change", (latest) => {
-      setScrollProgress(latest);
-      const idx = Math.min(5, Math.max(0, Math.floor(latest * 6)));
-      if (idx !== lastIdx) {
-        lastIdx = idx;
-        setActiveIdx(idx);
-      }
-    });
-  }, [scrollYProgress]);
+  const [activeIdx, setActiveIdx] = useState<number>(0);
 
   const currentGloss = content.glosses[activeIdx] ?? content.glosses[0];
 
@@ -58,67 +35,42 @@ export const S1Island: React.FC = () => {
   return (
     <section
       id="chapter-1"
-      ref={containerRef as unknown as React.RefObject<HTMLElement>}
-      className="relative min-h-[280vh] border-t border-ink/10 bg-paper"
+      ref={containerRef}
+      className="relative min-h-[280vh] border-t border-gold/20 bg-paper"
     >
-      {/* Layer 0: Background Topographic Contour Lines drifting [-35, -50] */}
-      <MultiParallaxLayer
-        progress={scrollYProgress}
-        vector={[-35, -50]}
-        className="absolute inset-0 pointer-events-none opacity-10 flex items-center justify-center"
-      >
-        <svg viewBox="0 0 900 900" className="w-[900px] h-[900px] max-w-none">
-          <ellipse cx="450" cy="450" rx="420" ry="380" fill="none" stroke="#b08d2e" strokeWidth="1" strokeDasharray="6 4" />
-          <ellipse cx="450" cy="450" rx="340" ry="300" fill="none" stroke="#b08d2e" strokeWidth="0.8" />
-          <ellipse cx="450" cy="450" rx="260" ry="220" fill="none" stroke="#b08d2e" strokeWidth="0.7" strokeDasharray="4 4" />
-          <ellipse cx="450" cy="450" rx="180" ry="150" fill="none" stroke="#b08d2e" strokeWidth="0.6" />
-        </svg>
-      </MultiParallaxLayer>
-
       <div className="sticky top-0 h-screen w-full flex flex-col lg:flex-row items-center justify-between p-6 sm:p-12 lg:p-16 max-w-7xl mx-auto overflow-hidden">
         {/* Copy Column (~42% desktop) */}
-        <motion.div
-          style={{ y: copyY }}
-          className="w-full lg:w-[42%] z-10 flex flex-col justify-center order-2 lg:order-1 mt-4 lg:mt-0"
-        >
+        <div className="w-full lg:w-[42%] z-10 flex flex-col justify-center order-2 lg:order-1 mt-4 lg:mt-0">
           <div className="mb-3 flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-gold animate-live-dot" />
             <KineticText
               text={`CHAPTER ${content.numeral} · ${content.title}`}
               as="span"
-              velocityReactive={true}
+              velocityReactive={false}
               className="font-mono text-xs uppercase tracking-widest text-gold font-semibold"
             />
           </div>
 
-          <motion.p
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.1, ease: EASINGS.smooth }}
-            className="font-serif text-lg sm:text-xl text-ink leading-relaxed max-w-[34ch] mb-6"
-          >
+          <p className="font-serif text-lg sm:text-xl text-ink leading-relaxed max-w-[34ch] mb-6">
             {content.copy}
-          </motion.p>
+          </p>
 
-          {/* Active Structure Gloss Box with AnimatePresence & 3D depth */}
-          <div className="relative p-5 rounded bg-paper-deep border border-ink/15 mb-6 min-h-[120px] flex flex-col justify-center transition-all duration-300 shadow-sm overflow-hidden">
-            {/* Dynamic Progress indicator bar */}
-            <div className="absolute top-0 left-0 right-0 h-[3px] bg-ink/10 rounded-t overflow-hidden">
-              <motion.div
-                className="h-full bg-gradient-to-r from-gold to-gold-bright"
+          {/* Active Structure Gloss with engraved gold hairlines */}
+          <div className="relative py-4 border-t border-b border-gold/20 mb-6 min-h-[120px] flex flex-col justify-center transition-all duration-300">
+            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gold/10">
+              <div
+                className="h-full bg-gold transition-all duration-300"
                 style={{ width: `${((activeIdx + 1) / 6) * 100}%` }}
-                transition={{ duration: 0.3 }}
               />
             </div>
 
             <AnimatePresence mode="wait">
               <motion.div
                 key={currentGloss.label}
-                initial={{ opacity: 0, x: 12 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -12 }}
-                transition={{ duration: 0.28, ease: EASINGS.smooth }}
+                initial={{ opacity: 0, scale: 0.96, y: 6 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.96, y: -6 }}
+                transition={{ duration: 0.28, ease: EASINGS.stamp }}
               >
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-mono text-xs uppercase tracking-wider font-semibold text-gold flex items-center gap-2">
@@ -136,7 +88,7 @@ export const S1Island: React.FC = () => {
             </AnimatePresence>
           </div>
 
-          {/* Gold Fraunces Italic Takeaway with KineticText */}
+          {/* Gold Fraunces Italic Takeaway */}
           <div className="border-l-2 border-gold pl-4 py-1">
             <KineticText
               text={`“${content.takeaway}”`}
@@ -147,7 +99,7 @@ export const S1Island: React.FC = () => {
             />
           </div>
 
-          {/* Interactive Gloss navigation pills */}
+          {/* Structure navigation buttons */}
           <div className="flex flex-wrap gap-1.5 mt-5">
             {content.glosses.map((item, idx) => (
               <button
@@ -156,27 +108,26 @@ export const S1Island: React.FC = () => {
                 aria-label={`Inspect ${item.label}`}
                 className={`px-2.5 py-1 text-[11px] font-mono rounded border transition-all duration-200 cursor-pointer ${
                   activeIdx === idx
-                    ? "bg-gold text-paper border-gold shadow-xs font-semibold scale-105"
-                    : "bg-paper-deep/60 text-ink-60 border-ink/10 hover:border-gold/50 hover:text-ink"
+                    ? "bg-gold text-paper border-gold font-semibold scale-105"
+                    : "bg-transparent text-ink-60 border-ink/15 hover:border-gold hover:text-ink"
                 }`}
               >
                 {item.label}
               </button>
             ))}
           </div>
-        </motion.div>
+        </div>
 
-        {/* 3D Scene Viewport (~55% desktop) */}
-        <motion.div
-          style={{ scale: sceneScale }}
-          className="w-full lg:w-[55%] h-[400px] sm:h-[480px] lg:h-[560px] relative order-1 lg:order-2 flex items-center justify-center rounded border border-ink/10 bg-paper-deep/30 shadow-inner overflow-hidden"
-        >
+        {/* 3D Scene Viewport (~55% desktop) directly on paper with zero widget box */}
+        <div className="w-full lg:w-[55%] h-[400px] sm:h-[480px] lg:h-[560px] relative order-1 lg:order-2 flex items-center justify-center overflow-hidden">
           <DynamicThreeIsland
-            progress={scrollProgress}
-            activeIndex={activeIdx}
+            sectionTriggerId="chapter-1"
+            onActiveIndexChange={(newIdx) => setActiveIdx(newIdx)}
           />
-        </motion.div>
+        </div>
       </div>
     </section>
   );
 };
+
+export default S1Island;

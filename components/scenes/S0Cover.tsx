@@ -6,15 +6,18 @@ import { Coin } from "../atoms/Coin";
 import { WaxSeal } from "../atoms/WaxSeal";
 import { CHAPTERS_CONTENT } from "@/content/chapters";
 import { EASINGS } from "@/lib/easings";
-import { KineticText } from "../motion/KineticText";
-import { MultiParallaxLayer } from "../motion/MultiParallaxLayer";
+import { SplitChars } from "../motion/SplitChars";
 import { useLenisScroll } from "../chrome/SmoothScroll";
+import { gsap } from "@/lib/gsap";
 
 export const S0Cover: React.FC = () => {
   const content = CHAPTERS_CONTENT.s0;
   const [mounted, setMounted] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const ring1Ref = useRef<HTMLDivElement>(null);
+  const ring2Ref = useRef<HTMLDivElement>(null);
+  const coinContainerRef = useRef<HTMLDivElement>(null);
   const { scrollTo, velocity } = useLenisScroll();
   const velocityRef = useRef<number>(0);
 
@@ -27,15 +30,55 @@ export const S0Cover: React.FC = () => {
     offset: ["start start", "end start"],
   });
 
-  // Multi-layered scroll transforms for deep parallax
-  const coinY = useTransform(scrollYProgress, [0, 1], [0, 180]);
-  const coinScale = useTransform(scrollYProgress, [0, 1], [1, 0.75]);
-  const coinRotate = useTransform(scrollYProgress, [0, 1], [0, 25]);
-  const textY = useTransform(scrollYProgress, [0, 1], [0, 120]);
-  const textOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
+  const textY = useTransform(scrollYProgress, [0, 0.8], [0, 100]);
+  const textOpacity = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
 
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  // GSAP Pointer Parallax with quickTo on Orbital Rings & Continuous Idle Coin Rotation
+  useEffect(() => {
+    const isReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (isReduced) return;
+
+    // Continuous idle 3D coin rotation
+    let coinTween: gsap.core.Tween | null = null;
+    if (coinContainerRef.current) {
+      coinTween = gsap.to(coinContainerRef.current, {
+        rotateY: 18,
+        rotateX: -8,
+        y: -10,
+        duration: 3.5,
+        ease: "sine.inOut",
+        yoyo: true,
+        repeat: -1,
+      });
+    }
+
+    // GSAP quickTo setters for rings
+    const setRing1X = ring1Ref.current ? gsap.quickTo(ring1Ref.current, "x", { duration: 0.6, ease: "power2.out" }) : null;
+    const setRing1Y = ring1Ref.current ? gsap.quickTo(ring1Ref.current, "y", { duration: 0.6, ease: "power2.out" }) : null;
+    const setRing2X = ring2Ref.current ? gsap.quickTo(ring2Ref.current, "x", { duration: 0.9, ease: "power2.out" }) : null;
+    const setRing2Y = ring2Ref.current ? gsap.quickTo(ring2Ref.current, "y", { duration: 0.9, ease: "power2.out" }) : null;
+
+    const handlePointerMove = (e: PointerEvent) => {
+      const { innerWidth, innerHeight } = window;
+      const nx = (e.clientX / innerWidth - 0.5) * 2;
+      const ny = (e.clientY / innerHeight - 0.5) * 2;
+
+      setRing1X?.(nx * 35);
+      setRing1Y?.(ny * 25);
+      setRing2X?.(nx * -20);
+      setRing2Y?.(ny * -15);
+    };
+
+    window.addEventListener("pointermove", handlePointerMove, { passive: true });
+
+    return () => {
+      window.removeEventListener("pointermove", handlePointerMove);
+      coinTween?.kill();
+    };
   }, []);
 
   // Ambient gold dust particles in Cover background with Retina DPR & velocity kinetics
@@ -47,14 +90,6 @@ export const S0Cover: React.FC = () => {
 
     const reducedMediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
     let isReducedMotion = reducedMediaQuery.matches;
-
-    const handleReducedChange = (e: MediaQueryListEvent) => {
-      isReducedMotion = e.matches;
-      if (isReducedMotion) {
-        drawStatic();
-      }
-    };
-    reducedMediaQuery.addEventListener("change", handleReducedChange);
 
     let animId: number | null = null;
     let isVisible = true;
@@ -124,7 +159,6 @@ export const S0Cover: React.FC = () => {
       scrollImpulse += (targetImpulse - scrollImpulse) * 0.08;
 
       for (const p of particles) {
-        // Apply target velocity with inertia dampening
         const targetVy = p.baseVy - scrollImpulse;
         p.vy += (targetVy - p.vy) * 0.06;
 
@@ -179,19 +213,14 @@ export const S0Cover: React.FC = () => {
 
     const handleResize = () => {
       updateDimensions();
-      if (isReducedMotion) {
-        drawStatic();
-      }
+      if (isReducedMotion) drawStatic();
     };
     window.addEventListener("resize", handleResize, { passive: true });
 
     return () => {
       observer.disconnect();
-      reducedMediaQuery.removeEventListener("change", handleReducedChange);
       window.removeEventListener("resize", handleResize);
-      if (animId !== null) {
-        cancelAnimationFrame(animId);
-      }
+      if (animId !== null) cancelAnimationFrame(animId);
     };
   }, []);
 
@@ -203,7 +232,7 @@ export const S0Cover: React.FC = () => {
     <section
       id="cover"
       ref={sectionRef as unknown as React.RefObject<HTMLElement>}
-      className="relative min-h-screen flex flex-col items-center justify-between px-6 py-16 sm:py-24 text-center"
+      className="relative min-h-screen flex flex-col items-center justify-between px-6 py-12 sm:py-20 text-center overflow-hidden"
       style={{
         background:
           "radial-gradient(ellipse at center, rgba(244,241,234,0.4) 0%, rgba(233,228,216,0.92) 100%)",
@@ -212,30 +241,27 @@ export const S0Cover: React.FC = () => {
       {/* Canvas Gold Dust Particles */}
       <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none opacity-70" />
 
-      {/* Layer 0: Opposing Diagonal Parallax Background Geometric Rings [-40, -60] */}
-      <MultiParallaxLayer
-        progress={scrollYProgress}
-        vector={[-40, -60]}
-        rotate={[0, 15]}
-        className="absolute inset-0 pointer-events-none flex items-center justify-center opacity-15"
+      {/* Layer 0: Background Geometric Orbital Rings with pointer quickTo */}
+      <div
+        ref={ring1Ref}
+        className="absolute inset-0 pointer-events-none flex items-center justify-center opacity-15 will-change-transform"
       >
         <div className="w-[600px] h-[600px] sm:w-[850px] sm:h-[850px] rounded-full border border-gold/30 flex items-center justify-center animate-[spin_120s_linear_infinite]">
           <div className="w-[450px] h-[450px] sm:w-[650px] sm:h-[650px] rounded-full border border-dashed border-gold/40" />
         </div>
-      </MultiParallaxLayer>
+      </div>
 
-      {/* Layer 0b: Subtle Guilloche Grid Lines [-25, -45] */}
-      <MultiParallaxLayer
-        progress={scrollYProgress}
-        vector={[-25, -45]}
-        className="absolute inset-0 pointer-events-none opacity-10 flex items-center justify-center"
+      {/* Layer 0b: Subtle Guilloche Grid Lines with opposing pointer quickTo */}
+      <div
+        ref={ring2Ref}
+        className="absolute inset-0 pointer-events-none opacity-10 flex items-center justify-center will-change-transform"
       >
         <svg viewBox="0 0 800 800" className="w-[700px] h-[700px] sm:w-[900px] sm:h-[900px]">
           <circle cx="400" cy="400" r="350" fill="none" stroke="#b08d2e" strokeWidth="1" strokeDasharray="6 4" />
           <circle cx="400" cy="400" r="280" fill="none" stroke="#b08d2e" strokeWidth="0.8" />
           <circle cx="400" cy="400" r="210" fill="none" stroke="#b08d2e" strokeWidth="0.6" strokeDasharray="3 3" />
         </svg>
-      </MultiParallaxLayer>
+      </div>
 
       {/* Fog gradient overlays */}
       <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-paper via-transparent to-paper opacity-75" />
@@ -246,57 +272,46 @@ export const S0Cover: React.FC = () => {
         initial={{ opacity: 0, y: -16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.64, ease: EASINGS.smooth }}
-        className="relative z-10 pt-4"
+        className="relative z-10 pt-2"
       >
         <span className="font-mono text-xs uppercase tracking-[0.28em] text-ink-60 border-b border-ink/20 pb-1.5 font-semibold">
           {content.eyebrow}
         </span>
       </motion.div>
 
-      {/* Center hero with scroll-driven parallax transform */}
+      {/* Center hero container with clear layout (Fix Bug 1: No overlap between coin, wordmark, and seals) */}
       <motion.div
         style={{ y: textY, opacity: textOpacity }}
-        className="relative z-10 max-w-2xl mx-auto my-auto flex flex-col items-center"
+        className="relative z-10 max-w-3xl mx-auto my-auto flex flex-col items-center px-4"
       >
-        {/* Layer 2: Animated $STANDARD coin with 3D perspective, opposing vector drift [+30, -20], and scroll rotate */}
-        <MultiParallaxLayer
-          progress={scrollYProgress}
-          vector={[30, -20]}
-          className="mb-8"
-        >
-          <motion.div
-            style={{ y: coinY, scale: coinScale, rotateZ: coinRotate }}
-            initial={{ scale: 0.7, opacity: 0, rotateY: -90 }}
-            animate={{ scale: 1, opacity: 1, rotateY: 0 }}
-            transition={{ duration: 0.8, delay: 0.1, ease: EASINGS.stamp }}
-            className="cursor-pointer hover:scale-105 transition-transform duration-300 drop-shadow-md"
-          >
-            <Coin size={148} />
-          </motion.div>
-        </MultiParallaxLayer>
+        {/* $STANDARD 3D Rotating Coin (Idle GSAP yoyo + tilt) */}
+        <div ref={coinContainerRef} className="mb-6 sm:mb-8 perspective-800">
+          <Coin size={132} interactiveTilt={true} />
+        </div>
 
-        {/* Title with Word-Masked 3D Kinetic Typography */}
-        <KineticText
-          text={content.title}
-          as="h1"
-          delay={0.2}
-          velocityReactive={true}
-          className="font-serif text-5xl sm:text-7xl lg:text-8xl font-semibold tracking-tight text-ink mb-6 select-none justify-center"
-        />
+        {/* Title: Per-character STAMP-in with SplitChars */}
+        <div className="mb-5">
+          <SplitChars
+            text={content.title}
+            as="h1"
+            stagger={0.035}
+            className="font-serif text-5xl sm:text-7xl lg:text-8xl font-semibold tracking-tight text-ink justify-center text-center leading-[1.08]"
+          />
+        </div>
 
         {/* Subtitle */}
         <motion.p
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.64, delay: 0.35, ease: EASINGS.smooth }}
-          className="font-serif text-base sm:text-lg sm:leading-relaxed text-ink-60 max-w-[36ch] mx-auto mb-10"
+          className="font-serif text-base sm:text-lg sm:leading-relaxed text-ink-60 max-w-[36ch] mx-auto mb-8"
         >
           {content.sub}
         </motion.p>
       </motion.div>
 
-      {/* Bottom CTA with dynamic pulse & Wax seal bottom-right STAMP */}
-      <div className="relative z-10 w-full flex items-center justify-center">
+      {/* Bottom CTA with dynamic pulse */}
+      <div className="relative z-10 w-full flex items-center justify-center pb-2">
         <button
           onClick={scrollToNext}
           className="group flex flex-col items-center gap-2.5 text-ink transition-colors focus-visible:outline-gold cursor-pointer"
@@ -309,15 +324,11 @@ export const S0Cover: React.FC = () => {
         </button>
       </div>
 
-      {/* Wax seal bottom-right STAMPs on load */}
+      {/* Wax seal fixed safely in bottom-right corner */}
       {mounted && (
-        <MultiParallaxLayer
-          progress={scrollYProgress}
-          vector={[20, -15]}
-          className="absolute bottom-6 right-6 sm:bottom-10 sm:right-12 z-20 pointer-events-none drop-shadow-lg"
-        >
-          <WaxSeal text="STANDARD" subtext="RESERVE" size={88} animateStamp />
-        </MultiParallaxLayer>
+        <div className="hidden sm:block absolute bottom-6 right-6 sm:bottom-8 sm:right-10 z-20 pointer-events-none drop-shadow-lg">
+          <WaxSeal text="STANDARD" subtext="RESERVE" size={80} animateStamp />
+        </div>
       )}
     </section>
   );

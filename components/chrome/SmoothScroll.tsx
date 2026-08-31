@@ -1,26 +1,25 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState, useRef, useCallback } from "react";
-import Lenis from "lenis";
+import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
+import { ScrollTrigger } from "@/lib/gsap";
 
 export interface ScrollContextValue {
-  lenis: Lenis | null;
   scrollY: number;
   velocity: number;
   direction: number;
   progress: number;
-  scrollTo: (target: string | HTMLElement | number, options?: {
-    offset?: number;
-    duration?: number;
-    immediate?: boolean;
-    lock?: boolean;
-    easing?: (t: number) => number;
-    onComplete?: () => void;
-  }) => void;
+  scrollTo: (
+    target: string | HTMLElement | number,
+    options?: {
+      smooth?: boolean;
+      position?: string;
+      offset?: number;
+      duration?: number;
+    }
+  ) => void;
 }
 
 const defaultContextValue: ScrollContextValue = {
-  lenis: null,
   scrollY: 0,
   velocity: 0,
   direction: 0,
@@ -30,6 +29,8 @@ const defaultContextValue: ScrollContextValue = {
 
 const ScrollContext = createContext<ScrollContextValue>(defaultContextValue);
 
+export const useSmoothScroll = () => useContext(ScrollContext);
+// Backwards compatibility alias
 export const useLenisScroll = () => useContext(ScrollContext);
 
 export interface SmoothScrollProps {
@@ -37,52 +38,35 @@ export interface SmoothScrollProps {
 }
 
 export const SmoothScroll: React.FC<SmoothScrollProps> = ({ children }) => {
-  const [lenisInstance, setLenisInstance] = useState<Lenis | null>(null);
   const [scrollY, setScrollY] = useState<number>(0);
   const [velocity, setVelocity] = useState<number>(0);
   const [direction, setDirection] = useState<number>(0);
   const [progress, setProgress] = useState<number>(0);
 
-  const lenisRef = useRef<Lenis | null>(null);
-
   useEffect(() => {
-    // Check prefers-reduced-motion
-    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
-    if (mediaQuery.matches) {
-      return;
-    }
+    if (typeof window === "undefined") return;
 
-    const lenis = new Lenis({
-      lerp: 0.08,
-      duration: 1.2,
-      smoothWheel: true,
-      wheelMultiplier: 1.0,
-      touchMultiplier: 1.5,
-      autoResize: true,
+    // Global ScrollTrigger listener for velocity, scroll position, and direction tracking
+    const rootTrigger = ScrollTrigger.create({
+      onUpdate: (self) => {
+        setScrollY(self.scroll());
+        setVelocity(self.getVelocity());
+        setDirection(self.direction);
+        setProgress(self.progress);
+      },
     });
 
-    lenisRef.current = lenis;
-    setLenisInstance(lenis);
+    // Refresh ScrollTrigger once mounted
+    ScrollTrigger.refresh();
 
-    lenis.on("scroll", (e: { scroll: number; velocity: number; direction: number; progress: number }) => {
-      setScrollY(e.scroll);
-      setVelocity(e.velocity);
-      setDirection(e.direction);
-      setProgress(e.progress);
-    });
-
-    let animationFrameId: number;
-    function raf(time: number) {
-      lenis.raf(time);
-      animationFrameId = requestAnimationFrame(raf);
-    }
-    animationFrameId = requestAnimationFrame(raf);
+    const handleResize = () => {
+      ScrollTrigger.refresh();
+    };
+    window.addEventListener("resize", handleResize, { passive: true });
 
     return () => {
-      cancelAnimationFrame(animationFrameId);
-      lenis.destroy();
-      lenisRef.current = null;
-      setLenisInstance(null);
+      rootTrigger.kill();
+      window.removeEventListener("resize", handleResize);
     };
   }, []);
 
@@ -90,26 +74,21 @@ export const SmoothScroll: React.FC<SmoothScrollProps> = ({ children }) => {
     (
       target: string | HTMLElement | number,
       options?: {
+        smooth?: boolean;
+        position?: string;
         offset?: number;
         duration?: number;
-        immediate?: boolean;
-        lock?: boolean;
-        easing?: (t: number) => number;
-        onComplete?: () => void;
       }
     ) => {
-      if (lenisRef.current) {
-        lenisRef.current.scrollTo(target, {
-          duration: 1.2,
-          easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-          ...options,
-        });
+      const isSmooth = options?.smooth !== false;
+      if (typeof target === "number") {
+        window.scrollTo({ top: target, behavior: isSmooth ? "smooth" : "instant" });
       } else {
-        if (typeof target === "number") {
-          window.scrollTo({ top: target, behavior: "smooth" });
-        } else {
-          const el = typeof target === "string" ? document.querySelector(target) : target;
-          el?.scrollIntoView({ behavior: "smooth" });
+        const el = typeof target === "string" ? document.querySelector(target) : target;
+        if (el) {
+          const rect = el.getBoundingClientRect();
+          const targetY = window.scrollY + rect.top + (options?.offset || 0);
+          window.scrollTo({ top: targetY, behavior: isSmooth ? "smooth" : "instant" });
         }
       }
     },
@@ -119,7 +98,6 @@ export const SmoothScroll: React.FC<SmoothScrollProps> = ({ children }) => {
   return (
     <ScrollContext.Provider
       value={{
-        lenis: lenisInstance,
         scrollY,
         velocity,
         direction,

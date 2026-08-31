@@ -21,13 +21,21 @@
 html {
   background-color: #f4f1ea;
   color: #1a1a18;
+  overflow: visible;
+  scrollbar-width: none; /* Hide scrollbar for Firefox */
+  -ms-overflow-style: none; /* Hide scrollbar for IE/Edge */
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none; /* Hide scrollbar for Chrome, Safari and Opera */
 }
 
 body {
   background-color: #f4f1ea;
   color: #1a1a18;
   font-family: var(--font-fraunces), Georgia, serif;
-  overflow-x: hidden;
+  overflow: visible;
   margin: 0;
   padding: 0;
   -webkit-font-smoothing: antialiased;

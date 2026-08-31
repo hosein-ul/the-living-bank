@@ -1,8 +1,8 @@
 "use client";
 
-import React from "react";
-import { motion } from "framer-motion";
+import React, { useRef, useEffect } from "react";
 import { EASINGS } from "@/lib/easings";
+import { gsap } from "@/lib/gsap";
 
 interface DialProps {
   multiplier: number; // 0.25 to 4.0
@@ -11,17 +11,67 @@ interface DialProps {
   className?: string;
 }
 
+// Piecewise linear angle interpolation matching all dial tick marks exactly
+export const getDialAngle = (multiplier: number): number => {
+  const points = [
+    { val: 0.25, deg: -120 },
+    { val: 0.5, deg: -90 },
+    { val: 1.0, deg: -40 },
+    { val: 2.0, deg: 20 },
+    { val: 3.0, deg: 70 },
+    { val: 4.0, deg: 120 },
+  ];
+
+  if (multiplier <= points[0].val) return points[0].deg;
+  if (multiplier >= points[points.length - 1].val) return points[points.length - 1].deg;
+
+  for (let i = 0; i < points.length - 1; i++) {
+    const p1 = points[i];
+    const p2 = points[i + 1];
+    if (multiplier >= p1.val && multiplier <= p2.val) {
+      const t = (multiplier - p1.val) / (p2.val - p1.val);
+      return p1.deg + t * (p2.deg - p1.deg);
+    }
+  }
+  return 0;
+};
+
 export const Dial: React.FC<DialProps> = ({
   multiplier,
   isContraction,
   flowHistory,
   className = "",
 }) => {
-  // Map multiplier (0.25 to 4.0) to dial angle (-120 deg to +120 deg)
-  const minM = 0.25;
-  const maxM = 4.0;
-  const normalized = (multiplier - minM) / (maxM - minM);
-  const angle = -120 + normalized * 240;
+  const needleRef = useRef<HTMLDivElement>(null);
+  const badgeRef = useRef<HTMLDivElement>(null);
+
+  const targetAngle = getDialAngle(multiplier);
+
+  useEffect(() => {
+    if (!needleRef.current) return;
+    const isReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    if (isReduced) {
+      needleRef.current.style.transform = `rotate(${targetAngle}deg)`;
+      return;
+    }
+
+    if (isContraction) {
+      // 240ms SLAM down
+      gsap.to(needleRef.current, {
+        rotate: targetAngle,
+        duration: 0.24,
+        ease: "power4.in",
+      });
+    } else {
+      // Stepped 4-step ratchet up (420ms each)
+      gsap.to(needleRef.current, {
+        rotate: targetAngle,
+        duration: 0.42,
+        ease: "steps(4)",
+      });
+    }
+  }, [targetAngle, isContraction]);
 
   // 14-epoch strip chart SVG path
   const chartWidth = 280;
@@ -44,7 +94,7 @@ export const Dial: React.FC<DialProps> = ({
   return (
     <div className={`relative w-full max-w-[380px] flex flex-col items-center select-none ${className}`}>
       {/* 14-Epoch Strip Chart behind the dial */}
-      <div className="w-full mb-3 p-3 bg-paper rounded-lg border border-ink/15 shadow-sm">
+      <div className="w-full mb-3 py-2 px-3 border-b border-gold/20 bg-transparent">
         <div className="flex justify-between items-center mb-1.5 font-mono text-[9.5px] text-ink-60 uppercase tracking-widest font-semibold">
           <span>Net Flow History (14 Epochs)</span>
           <span className={isContraction ? "text-red font-bold" : "text-green font-bold"}>
@@ -176,31 +226,28 @@ export const Dial: React.FC<DialProps> = ({
             );
           })}
 
-          {/* Center Escapement Gear Hub */}
+          {/* Center Hub */}
           <circle cx="170" cy="190" r="28" fill="#c9a961" stroke="#b08d2e" strokeWidth="2.5" />
           <circle cx="170" cy="190" r="16" fill="#1a1a18" />
           <circle cx="170" cy="190" r="5" fill="#f4f1ea" />
         </svg>
 
-        {/* Needle Arm Layer */}
-        <motion.div
-          animate={{ rotate: angle }}
-          transition={
-            isContraction
-              ? { duration: 0.24, ease: EASINGS.slam }
-              : { duration: 0.42, ease: EASINGS.smooth }
-          }
-          style={{ originX: "50%", originY: "100%" }}
-          className="absolute left-[calc(50%-3px)] top-[18px] w-[6px] h-[172px] pointer-events-none"
+        {/* Needle Arm with GSAP transition */}
+        <div
+          ref={needleRef}
+          style={{
+            transformOrigin: "50% 100%",
+            transform: `rotate(${targetAngle}deg)`,
+          }}
+          className="absolute left-[calc(50%-3px)] top-[18px] w-[6px] h-[172px] pointer-events-none will-change-transform"
         >
-          {/* Brass pointer needle */}
           <div className="w-full h-full bg-gradient-to-t from-gold via-gold-bright to-ink rounded-t shadow-lg flex flex-col items-center">
             <div className="w-3.5 h-3.5 rounded-full bg-gold border-2 border-ink -mt-1 shadow-sm" />
           </div>
-        </motion.div>
+        </div>
       </div>
 
-      {/* Numerical Multiplier HUD */}
+      {/* Multiplier Display */}
       <div className="mt-3 text-center font-mono">
         <span className="text-xs uppercase tracking-widest text-ink-60 block font-medium">
           Issuance Multiplier
