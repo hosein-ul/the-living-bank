@@ -6,6 +6,7 @@ import { formatNumber } from "../sim/formatters";
 import { Odometer } from "../atoms/Odometer";
 import { CHAPTERS_CONTENT } from "@/content/chapters";
 import { KineticText } from "../motion/KineticText";
+import { gsap, ScrollTrigger } from "@/lib/gsap";
 
 
 export const S9Ledger: React.FC = () => {

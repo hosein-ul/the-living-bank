@@ -6,6 +6,7 @@ import { Dial } from "../atoms/Dial";
 import { CHAPTERS_CONTENT } from "@/content/chapters";
 import { sound } from "@/lib/sound";
 import { KineticText } from "../motion/KineticText";
+import { gsap, ScrollTrigger } from "@/lib/gsap";
 
 
 export const S5Dial: React.FC = () => {
