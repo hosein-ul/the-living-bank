@@ -393,75 +393,75 @@ export const S2Gate: React.FC = () => {
       }`}
     >
       <div className="sticky top-0 h-screen w-full flex flex-col lg:flex-row items-center justify-between p-6 sm:p-12 lg:p-16 max-w-7xl mx-auto overflow-hidden">
-        {/* Copy Column (~42% desktop) with Velocity Skew */}
+        {/* Copy Column (~42% desktop) */}
         <div className="w-full lg:w-[42%] z-10 flex flex-col justify-center order-2 lg:order-1 mt-6 lg:mt-0">
           <div className="mb-3 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-gold animate-live-dot" />
-              <KineticText
-                text={`CHAPTER ${content.numeral} · ${content.title}`}
-                as="span"
-                velocityReactive={true}
-                className="font-mono text-xs uppercase tracking-widest text-gold font-semibold"
-              />
-            </div>
+            <span className="w-2 h-2 rounded-full bg-gold animate-live-dot" />
+            <KineticText
+              text={`CHAPTER ${content.numeral} · ${content.title}`}
+              as="span"
+              velocityReactive={false}
+              className="font-mono text-xs uppercase tracking-widest text-gold font-semibold"
+            />
+          </div>
 
-            <p className="font-serif text-lg sm:text-xl text-ink leading-relaxed max-w-[34ch] mb-6">
-              {content.copy}
-            </p>
+          <p className="font-serif text-lg sm:text-xl text-ink leading-relaxed max-w-[34ch] mb-6">
+            {content.copy}
+          </p>
 
-            {/* Odometer readout card for Net ETH Flow */}
-            <div className="p-5 rounded bg-paper-deep border border-ink/15 mb-4 flex items-center justify-between shadow-sm">
-              <div>
-                <span className="font-mono text-[10px] text-ink-60 uppercase tracking-widest block mb-1">
-                  POLICY INPUT · NET ETH FLOW
-                </span>
-                <div className="flex items-center gap-2">
-                  <span
-                    className={`font-mono text-xl sm:text-2xl font-bold tabular-nums ${
-                      leverValue > 0.05
-                        ? "text-green"
-                        : leverValue < -0.05
-                        ? "text-red"
-                        : "text-gold"
-                    }`}
-                  >
-                    {leverValue > 0 ? "+" : ""}
-                    {(leverValue * 100).toFixed(0)}%
-                  </span>
-                  <span className="font-mono text-xs text-ink-60 uppercase">
-                    ({leverValue > 0.05 ? "EXPANSION" : leverValue < -0.05 ? "CONTRACTION" : "NEUTRAL"})
-                  </span>
-                </div>
-              </div>
-              <div className="text-right">
-                <span className="font-mono text-[10px] text-ink-60 uppercase tracking-widest block mb-1">
-                  CUMULATIVE NET
-                </span>
+          {/* Odometer readout card for Net ETH Flow */}
+          <div className="py-3 px-4 border-t border-b border-gold/20 mb-4 flex items-center justify-between">
+            <div>
+              <span className="font-mono text-[10px] text-ink-60 uppercase tracking-widest block mb-1">
+                POLICY INPUT · NET ETH FLOW
+              </span>
+              <div className="flex items-center gap-2">
                 <span
-                  ref={counterRef}
-                  className="text-lg font-mono font-semibold text-ink tabular-nums"
+                  className={`font-mono text-xl sm:text-2xl font-bold tabular-nums ${
+                    leverValue > 0.05
+                      ? "text-green"
+                      : leverValue < -0.05
+                      ? "text-red"
+                      : "text-gold"
+                  }`}
                 >
-                  +1,420 NET ETH
+                  {leverValue > 0 ? "+" : ""}
+                  {(leverValue * 100).toFixed(0)}%
+                </span>
+                <span className="font-mono text-xs text-ink-60 uppercase">
+                  ({leverValue > 0.05 ? "EXPANSION" : leverValue < -0.05 ? "CONTRACTION" : "NEUTRAL"})
                 </span>
               </div>
             </div>
-
-            {/* Gold Fraunces Italic Takeaway */}
-            <div className="border-l-2 border-gold pl-4 py-1 mt-2">
-              <KineticText
-                text={`“${content.takeaway}”`}
-                as="p"
-                italicTakeaway={true}
-                delay={0.15}
-                className="font-serif italic text-gold text-sm sm:text-base tracking-wide"
-              />
+            <div className="text-right">
+              <span className="font-mono text-[10px] text-ink-60 uppercase tracking-widest block mb-1">
+                CUMULATIVE NET
+              </span>
+              <span
+                ref={counterRef}
+                className="text-lg font-mono font-semibold text-ink tabular-nums"
+              >
+                +1,420 NET ETH
+              </span>
             </div>
           </div>
 
+          {/* Gold Fraunces Italic Takeaway */}
+          <div className="border-l-2 border-gold pl-4 py-1 mt-2">
+            <KineticText
+              text={`“${content.takeaway}”`}
+              as="p"
+              italicTakeaway={true}
+              delay={0.15}
+              className="font-serif italic text-gold text-sm sm:text-base tracking-wide"
+            />
+          </div>
+        </div>
+
         {/* Interactive Gate & Lever Arena (~55% desktop) */}
-        <div className="w-full lg:w-[55%] h-[420px] sm:h-[480px] lg:h-[540px] relative order-1 lg:order-2 flex flex-col items-center justify-between p-4 rounded border border-ink/10 bg-paper-deep/30 shadow-inner overflow-hidden">
+        <div className="w-full lg:w-[55%] h-[420px] sm:h-[480px] lg:h-[540px] relative order-1 lg:order-2 flex flex-col items-center justify-between p-4 overflow-hidden">
           {/* Canvas Crowd & Coin Flow Simulation */}
-          <div className="relative w-full h-[68%] rounded border border-ink/10 bg-paper overflow-hidden">
+          <div className="relative w-full h-[68%] rounded border border-gold/30 bg-paper overflow-hidden shadow-xs">
             <canvas ref={canvasRef} className="w-full h-full" />
 
             <div className="absolute top-3 left-4 font-mono text-[11px] text-green tracking-wider uppercase font-semibold flex items-center gap-1.5">

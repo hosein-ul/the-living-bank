@@ -103,41 +103,41 @@ export const S8Ghost: React.FC = () => {
       className="relative min-h-[240vh] border-t border-ink/10 bg-[#eae5d8] select-none"
     >
       <div className="sticky top-0 h-screen w-full flex flex-col lg:flex-row items-center justify-between p-6 sm:p-12 lg:p-16 max-w-7xl mx-auto overflow-hidden">
-        {/* Copy Column (~42% desktop) with Velocity Skew */}
+        {/* Copy Column (~42% desktop) */}
         <div className="w-full lg:w-[42%] flex flex-col justify-center order-2 lg:order-1 mt-6 lg:mt-0 z-10">
           <div className="mb-3 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-gold animate-live-dot" />
-              <KineticText
-                text={`CHAPTER ${content.numeral} · ${content.title}`}
-                as="span"
-                velocityReactive={true}
-                className="font-mono text-xs uppercase tracking-widest text-gold font-semibold"
-              />
-            </div>
-
-            <p className="font-serif text-lg sm:text-xl text-ink leading-relaxed max-w-[34ch] mb-6">
-              {content.copy}
-            </p>
-
-            {/* Gold Fraunces Italic Takeaway */}
-            <div className="border-l-2 border-gold pl-4 py-1">
-              <KineticText
-                text={`“${content.takeaway}”`}
-                as="p"
-                italicTakeaway={true}
-                delay={0.15}
-                className="font-serif italic text-gold text-sm sm:text-base tracking-wide"
-              />
-            </div>
+            <span className="w-2 h-2 rounded-full bg-gold animate-live-dot" />
+            <KineticText
+              text={`CHAPTER ${content.numeral} · ${content.title}`}
+              as="span"
+              velocityReactive={false}
+              className="font-mono text-xs uppercase tracking-widest text-gold font-semibold"
+            />
           </div>
+
+          <p className="font-serif text-lg sm:text-xl text-ink leading-relaxed max-w-[34ch] mb-6">
+            {content.copy}
+          </p>
+
+          {/* Gold Fraunces Italic Takeaway */}
+          <div className="border-l-2 border-gold pl-4 py-1">
+            <KineticText
+              text={`“${content.takeaway}”`}
+              as="p"
+              italicTakeaway={true}
+              delay={0.15}
+              className="font-serif italic text-gold text-sm sm:text-base tracking-wide"
+            />
+          </div>
+        </div>
 
         {/* Stage (~56% desktop): Dimmed Lobby with Ghost NPC */}
         <div
           ref={stageRef}
-          className="w-full lg:w-[56%] flex flex-col items-center justify-center bg-paper-deep/70 p-6 sm:p-8 rounded-lg border border-ink/20 shadow-[0_12px_32px_rgba(26,26,24,0.08)] order-1 lg:order-2 will-change-transform"
+          className="w-full lg:w-[56%] flex flex-col items-center justify-center p-4 order-1 lg:order-2 will-change-transform"
         >
           {/* Wall Poster: DORMANT 30 DAYS — BOUNTY 2% */}
-          <div className="w-full flex items-center justify-between p-3.5 bg-paper rounded-lg border border-gold/50 mb-5 shadow-sm">
+          <div className="w-full flex items-center justify-between py-2.5 px-3 border-t border-b border-gold/40 mb-5">
             <div className="flex items-center gap-3">
               <div className="w-2.5 h-2.5 rounded-full bg-red animate-pulse" />
               <span className="font-mono text-xs font-bold text-ink uppercase tracking-wider">

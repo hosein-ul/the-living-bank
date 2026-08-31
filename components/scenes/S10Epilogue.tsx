@@ -264,7 +264,7 @@ export const S10Epilogue: React.FC = () => {
         <KineticText
           text={content.title}
           as="h2"
-          velocityReactive={true}
+          velocityReactive={false}
           className="font-serif text-3xl sm:text-5xl font-semibold tracking-tight text-ink mb-4 justify-center"
         />
 

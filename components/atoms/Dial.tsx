@@ -94,7 +94,7 @@ export const Dial: React.FC<DialProps> = ({
   return (
     <div className={`relative w-full max-w-[380px] flex flex-col items-center select-none ${className}`}>
       {/* 14-Epoch Strip Chart behind the dial */}
-      <div className="w-full mb-3 p-3 bg-paper rounded-lg border border-ink/15 shadow-sm">
+      <div className="w-full mb-3 py-2 px-3 border-b border-gold/20 bg-transparent">
         <div className="flex justify-between items-center mb-1.5 font-mono text-[9.5px] text-ink-60 uppercase tracking-widest font-semibold">
           <span>Net Flow History (14 Epochs)</span>
           <span className={isContraction ? "text-red font-bold" : "text-green font-bold"}>
