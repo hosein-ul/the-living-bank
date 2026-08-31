@@ -38,9 +38,9 @@ export const S1Island: React.FC = () => {
       ref={containerRef}
       className="relative min-h-[280vh] border-t border-gold/20 bg-paper"
     >
-      <div className="sticky top-0 h-screen w-full flex flex-col lg:flex-row items-center justify-between p-6 sm:p-12 lg:p-16 max-w-7xl mx-auto overflow-hidden">
+      <div className="sticky top-0 h-[100svh] lg:h-screen w-full flex flex-col lg:flex-row items-center justify-between p-4 sm:p-6 lg:p-16 max-w-7xl mx-auto overflow-hidden gap-3 lg:gap-0">
         {/* Copy Column (~42% desktop) */}
-        <div className="w-full lg:w-[42%] z-10 flex flex-col justify-center order-2 lg:order-1 mt-4 lg:mt-0">
+        <div className="w-full lg:w-[42%] z-10 flex flex-col justify-center order-2 lg:order-1 mt-2 lg:mt-0 min-w-0">
           <div className="mb-3 flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-gold animate-live-dot" />
             <KineticText
@@ -51,7 +51,7 @@ export const S1Island: React.FC = () => {
             />
           </div>
 
-          <p className="font-serif text-lg sm:text-xl text-ink leading-relaxed max-w-[34ch] mb-6">
+          <p className="font-serif text-base sm:text-lg lg:text-xl text-ink leading-relaxed max-w-[34ch] mb-4 sm:mb-6">
             {content.copy}
           </p>
 
@@ -118,8 +118,8 @@ export const S1Island: React.FC = () => {
           </div>
         </div>
 
-        {/* 3D Scene Viewport (~55% desktop) directly on paper with zero widget box */}
-        <div className="w-full lg:w-[55%] h-[400px] sm:h-[480px] lg:h-[560px] relative order-1 lg:order-2 flex items-center justify-center overflow-hidden">
+        {/* 3D Scene Viewport (~55% desktop) — 390px fluid height to avoid clipping */}
+        <div className="w-full lg:w-[55%] h-[38svh] min-h-[280px] sm:h-[480px] lg:h-[560px] relative order-1 lg:order-2 flex items-center justify-center overflow-hidden shrink-0">
           <DynamicThreeIsland
             sectionTriggerId="chapter-1"
             onActiveIndexChange={(newIdx) => setActiveIdx(newIdx)}

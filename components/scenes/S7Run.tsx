@@ -9,6 +9,7 @@ import { formatNumber, formatPercent } from "../sim/formatters";
 import { CHAPTERS_CONTENT } from "@/content/chapters";
 import { sound } from "@/lib/sound";
 import { KineticText } from "../motion/KineticText";
+import { gsap, ScrollTrigger } from "@/lib/gsap";
 
 
 export const S7Run: React.FC = () => {
@@ -87,9 +88,9 @@ export const S7Run: React.FC = () => {
       ref={containerRef}
       className="relative min-h-[220vh] border-t border-ink/10 bg-paper select-none"
     >
-      <div className="sticky top-0 h-screen w-full flex flex-col lg:flex-row items-center justify-between p-6 sm:p-12 lg:p-16 max-w-7xl mx-auto overflow-hidden">
+      <div className="sticky top-0 h-[100svh] lg:h-screen w-full flex flex-col lg:flex-row items-center justify-between p-4 sm:p-6 lg:p-16 max-w-7xl mx-auto overflow-hidden gap-3 lg:gap-0">
         {/* Copy Column (~42% desktop) */}
-        <div className="w-full lg:w-[42%] flex flex-col justify-center order-2 lg:order-1 mt-6 lg:mt-0 z-10">
+        <div className="w-full lg:w-[42%] flex flex-col justify-center order-2 lg:order-1 mt-2 lg:mt-0 z-10 min-w-0">
           <div className="mb-3 flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-gold animate-live-dot" />
             <KineticText
@@ -100,7 +101,7 @@ export const S7Run: React.FC = () => {
             />
           </div>
 
-          <p className="font-serif text-lg sm:text-xl text-ink leading-relaxed max-w-[34ch] mb-4">
+          <p className="font-serif text-base sm:text-lg lg:text-xl text-ink leading-relaxed max-w-[34ch] mb-4">
             {content.copy}
           </p>
 
@@ -129,10 +130,10 @@ export const S7Run: React.FC = () => {
           </div>
         </div>
 
-        {/* Stage (~56% desktop): Bank Lobby with Sticky Card Stacking */}
+        {/* Stage (~56% desktop): Bank Lobby with Sticky Card Stacking — 390px fluid */}
         <div
           ref={cardStackRef}
-          className="w-full lg:w-[56%] flex flex-col items-center justify-center p-4 order-1 lg:order-2"
+          className="w-full lg:w-[56%] flex flex-col items-center justify-center p-3 sm:p-4 order-1 lg:order-2 shrink-0"
         >
           {/* Top Bar: Toll Gate Arc + Status */}
           <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">

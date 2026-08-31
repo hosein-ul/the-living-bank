@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import confetti from "canvas-confetti";
 import { useSim } from "../sim/SimProvider";
 import { NPC, NPCState } from "../atoms/NPC";
@@ -9,6 +9,7 @@ import { formatRate } from "../sim/formatters";
 import { CHAPTERS_CONTENT } from "@/content/chapters";
 import { sound } from "@/lib/sound";
 import { KineticText } from "../motion/KineticText";
+import { gsap, ScrollTrigger } from "@/lib/gsap";
 
 
 export const S8Ghost: React.FC = () => {
@@ -29,6 +30,28 @@ export const S8Ghost: React.FC = () => {
   const shard3Ref = useRef<SVGPathElement>(null);
 
   const [hasReported, setHasReported] = useState<boolean>(false);
+
+  // Scrub-continuity: continuous pinned transform (ghost vignette + stage parallax)
+  useEffect(() => {
+    const el = containerRef.current;
+    const stage = stageRef.current;
+    if (!el || !stage) return;
+    const isReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (isReduced) return;
+    const st = ScrollTrigger.create({
+      trigger: el,
+      start: "top top",
+      end: "bottom bottom",
+      scrub: 1,
+      onUpdate: (self) => {
+        const p = self.progress;
+        // Slight drift + vignette deepen through pin
+        gsap.set(stage, { y: (p - 0.5) * -16 });
+        el.style.setProperty("--ghost-vignette", String(0.06 + p * 0.1));
+      },
+    });
+    return () => st.kill();
+  }, []);
 
   const handleReport = () => {
     if (!hasReported) {
@@ -102,7 +125,7 @@ export const S8Ghost: React.FC = () => {
       ref={containerRef}
       className="relative min-h-[240vh] border-t border-ink/10 bg-[#eae5d8] select-none"
     >
-      <div className="sticky top-0 h-screen w-full flex flex-col lg:flex-row items-center justify-between p-6 sm:p-12 lg:p-16 max-w-7xl mx-auto overflow-hidden">
+      <div className="sticky top-0 h-[100svh] lg:h-screen w-full flex flex-col lg:flex-row items-center justify-between p-4 sm:p-6 lg:p-16 max-w-7xl mx-auto overflow-hidden gap-4 lg:gap-0">
         {/* Copy Column (~42% desktop) */}
         <div className="w-full lg:w-[42%] flex flex-col justify-center order-2 lg:order-1 mt-6 lg:mt-0 z-10">
           <div className="mb-3 flex items-center gap-2">
@@ -134,7 +157,7 @@ export const S8Ghost: React.FC = () => {
         {/* Stage (~56% desktop): Dimmed Lobby with Ghost NPC */}
         <div
           ref={stageRef}
-          className="w-full lg:w-[56%] flex flex-col items-center justify-center p-4 order-1 lg:order-2 will-change-transform"
+          className="w-full lg:w-[56%] flex flex-col items-center justify-center p-3 sm:p-4 order-1 lg:order-2 will-change-transform shrink-0"
         >
           {/* Wall Poster: DORMANT 30 DAYS — BOUNTY 2% */}
           <div className="w-full flex items-center justify-between py-2.5 px-3 border-t border-b border-gold/40 mb-5">

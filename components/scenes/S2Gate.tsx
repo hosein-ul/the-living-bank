@@ -392,9 +392,9 @@ export const S2Gate: React.FC = () => {
         leverValue > 0.1 ? "bg-[#f2f4ec]" : leverValue < -0.1 ? "bg-[#f5ecea]" : "bg-paper"
       }`}
     >
-      <div className="sticky top-0 h-screen w-full flex flex-col lg:flex-row items-center justify-between p-6 sm:p-12 lg:p-16 max-w-7xl mx-auto overflow-hidden">
+      <div className="sticky top-0 h-[100svh] lg:h-screen w-full flex flex-col lg:flex-row items-center justify-between p-4 sm:p-6 lg:p-16 max-w-7xl mx-auto overflow-hidden gap-3 lg:gap-0">
         {/* Copy Column (~42% desktop) */}
-        <div className="w-full lg:w-[42%] z-10 flex flex-col justify-center order-2 lg:order-1 mt-6 lg:mt-0">
+        <div className="w-full lg:w-[42%] z-10 flex flex-col justify-center order-2 lg:order-1 mt-2 lg:mt-0 min-w-0">
           <div className="mb-3 flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-gold animate-live-dot" />
             <KineticText
@@ -405,7 +405,7 @@ export const S2Gate: React.FC = () => {
             />
           </div>
 
-          <p className="font-serif text-lg sm:text-xl text-ink leading-relaxed max-w-[34ch] mb-6">
+          <p className="font-serif text-base sm:text-lg lg:text-xl text-ink leading-relaxed max-w-[34ch] mb-4 sm:mb-6">
             {content.copy}
           </p>
 
@@ -458,8 +458,8 @@ export const S2Gate: React.FC = () => {
           </div>
         </div>
 
-        {/* Interactive Gate & Lever Arena (~55% desktop) */}
-        <div className="w-full lg:w-[55%] h-[420px] sm:h-[480px] lg:h-[540px] relative order-1 lg:order-2 flex flex-col items-center justify-between p-4 overflow-hidden">
+        {/* Interactive Gate & Lever Arena (~55% desktop) — 390px fluid */}
+        <div className="w-full lg:w-[55%] h-[42svh] min-h-[340px] sm:h-[480px] lg:h-[540px] relative order-1 lg:order-2 flex flex-col items-center justify-between p-3 sm:p-4 overflow-hidden shrink-0">
           {/* Canvas Crowd & Coin Flow Simulation */}
           <div className="relative w-full h-[68%] rounded border border-gold/30 bg-paper overflow-hidden shadow-xs">
             <canvas ref={canvasRef} className="w-full h-full" />
@@ -489,7 +489,7 @@ export const S2Gate: React.FC = () => {
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
-            className="w-full h-[28%] mt-2 px-6 py-3 bg-paper-deep border border-ink/15 rounded flex flex-col justify-center cursor-ew-resize relative group focus-visible:outline-gold select-none"
+            className="w-full h-[28%] mt-2 px-3 sm:px-6 py-3 bg-paper-deep border border-ink/15 rounded flex flex-col justify-center cursor-ew-resize relative group focus-visible:outline-gold select-none"
           >
             {/* Top Label Header (Positioned clearly above track to prevent handle overlap) */}
             <div className="flex justify-between items-center text-[10px] font-mono text-ink-60 mb-2 pointer-events-none">

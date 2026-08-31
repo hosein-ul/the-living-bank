@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useRef } from "react";
+import React, { useRef, useEffect } from "react";
 import { useSim } from "../sim/SimProvider";
 import { Dial } from "../atoms/Dial";
 import { CHAPTERS_CONTENT } from "@/content/chapters";
 import { sound } from "@/lib/sound";
 import { KineticText } from "../motion/KineticText";
+import { gsap, ScrollTrigger } from "@/lib/gsap";
 
 
 export const S5Dial: React.FC = () => {
@@ -21,6 +22,30 @@ export const S5Dial: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const badgeRef = useRef<HTMLSpanElement>(null);
+  const dialWrapRef = useRef<HTMLDivElement>(null);
+
+  // Scrub-continuity: pinned content transforms continuously via GSAP scrub (no dead pin)
+  useEffect(() => {
+    const el = containerRef.current;
+    const stage = stageRef.current;
+    const dial = dialWrapRef.current;
+    if (!el || !stage) return;
+    const isReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (isReduced) return;
+    const st = ScrollTrigger.create({
+      trigger: el,
+      start: "top top",
+      end: "bottom bottom",
+      scrub: 1,
+      onUpdate: (self) => {
+        const p = self.progress;
+        // Subtle continuous parallax: dial lifts slightly, copy stage does opposite
+        gsap.set(stage, { y: (p - 0.5) * -18 });
+        if (dial) gsap.set(dial, { y: (p - 0.5) * 10, scale: 0.98 + p * 0.04 });
+      },
+    });
+    return () => st.kill();
+  }, []);
 
   const handleInflow = () => {
     advanceEpoch(0.35);
@@ -72,7 +97,7 @@ export const S5Dial: React.FC = () => {
       ref={containerRef}
       className="relative min-h-[260vh] border-t border-ink/10 bg-paper select-none"
     >
-      <div className="sticky top-0 h-screen w-full flex flex-col lg:flex-row items-center justify-between p-6 sm:p-12 lg:p-16 max-w-7xl mx-auto overflow-hidden">
+      <div className="sticky top-0 h-[100svh] lg:h-screen w-full flex flex-col lg:flex-row items-center justify-between p-4 sm:p-6 lg:p-16 max-w-7xl mx-auto overflow-hidden gap-4 lg:gap-0">
         {/* Copy Column (~42% desktop) */}
         <div className="w-full lg:w-[42%] flex flex-col justify-center order-2 lg:order-1 mt-6 lg:mt-0 z-10">
           <div className="mb-3 flex items-center gap-2">
@@ -104,7 +129,7 @@ export const S5Dial: React.FC = () => {
         {/* Stage (~56% desktop) */}
         <div
           ref={stageRef}
-          className="w-full lg:w-[56%] flex flex-col items-center justify-center order-1 lg:order-2 p-4 will-change-transform"
+          className="w-full lg:w-[56%] flex flex-col items-center justify-center order-1 lg:order-2 p-3 sm:p-4 will-change-transform shrink-0"
         >
           {/* Regime Badge */}
           <div className="mb-4 flex items-center gap-2.5">
@@ -123,12 +148,14 @@ export const S5Dial: React.FC = () => {
             </span>
           </div>
 
-          {/* Monumental Brass Issuance Dial */}
-          <Dial
-            multiplier={m}
-            isContraction={regime === "CONTRACTION"}
-            flowHistory={f}
-          />
+          {/* Monumental Brass Issuance Dial — wrapped for scrub parallax */}
+          <div ref={dialWrapRef} className="w-full flex justify-center will-change-transform">
+            <Dial
+              multiplier={m}
+              isContraction={regime === "CONTRACTION"}
+              flowHistory={f}
+            />
+          </div>
 
           {/* Two-position Brass Lever */}
           <div className="mt-8 flex flex-col items-center w-full">

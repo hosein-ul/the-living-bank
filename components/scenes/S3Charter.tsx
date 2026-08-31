@@ -30,7 +30,7 @@ export const S3Charter: React.FC = () => {
     }
   }, [claimedCharter]);
 
-  // Section entry GSAP reveal
+  // Scrub-continuity: continuous reveal across full pin (was short 80%->30% dead after)
   useEffect(() => {
     const el = containerRef.current;
     const bookEl = bookContainerRef.current;
@@ -39,29 +39,47 @@ export const S3Charter: React.FC = () => {
     const isReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (isReduced) return;
 
+    // Keep S3 as shorter non-pinned section: scrub across its viewport entry
+    // but make it continuous (scrub:true) covering meaningful scroll instead of snapping
     const st = gsap.fromTo(
       bookEl,
       {
-        y: 40,
+        y: 36,
         opacity: 0.2,
-        scale: 0.94,
+        scale: 0.96,
       },
       {
         y: 0,
         opacity: 1.0,
         scale: 1.0,
-        ease: "power2.out",
+        ease: "none",
         scrollTrigger: {
           trigger: el,
-          start: "top 80%",
-          end: "top 30%",
-          scrub: 0.8,
+          start: "top 88%",
+          end: "top 12%",
+          scrub: 1,
         },
       }
     );
 
+    // Additional continuous parallax for engraving backdrop
+    const engraving = el.querySelector<HTMLElement>(".engraving-bg");
+    let extra: ScrollTrigger | undefined;
+    if (engraving) {
+      extra = ScrollTrigger.create({
+        trigger: el,
+        start: "top bottom",
+        end: "bottom top",
+        scrub: 1,
+        onUpdate: (self) => {
+          gsap.set(engraving, { y: self.progress * -18 });
+        },
+      });
+    }
+
     return () => {
       st.scrollTrigger?.kill();
+      extra?.kill();
     };
   }, []);
 
@@ -111,8 +129,8 @@ export const S3Charter: React.FC = () => {
       ref={containerRef}
       className="relative min-h-[140vh] py-24 sm:py-32 px-6 sm:px-12 flex flex-col items-center justify-center border-t border-gold/20 bg-paper overflow-hidden"
     >
-      {/* Background Architectural Engraving */}
-      <div className="absolute inset-0 pointer-events-none opacity-10 flex items-center justify-center">
+      {/* Background Architectural Engraving — scrub-parallax target */}
+      <div className="engraving-bg absolute inset-0 pointer-events-none opacity-10 flex items-center justify-center will-change-transform">
         <svg viewBox="0 0 1200 800" className="w-full h-full">
           <line x1="100" y1="200" x2="1100" y2="200" stroke="#b08d2e" strokeWidth="1" strokeDasharray="8 6" />
           <line x1="100" y1="600" x2="1100" y2="600" stroke="#b08d2e" strokeWidth="1" strokeDasharray="8 6" />

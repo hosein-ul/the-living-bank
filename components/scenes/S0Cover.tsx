@@ -8,7 +8,7 @@ import { CHAPTERS_CONTENT } from "@/content/chapters";
 import { EASINGS } from "@/lib/easings";
 import { SplitChars } from "../motion/SplitChars";
 import { useLenisScroll } from "../chrome/SmoothScroll";
-import { gsap } from "@/lib/gsap";
+import { gsap, ScrollTrigger } from "@/lib/gsap";
 
 export const S0Cover: React.FC = () => {
   const content = CHAPTERS_CONTENT.s0;
@@ -25,6 +25,9 @@ export const S0Cover: React.FC = () => {
     velocityRef.current = velocity;
   }, [velocity]);
 
+  const heroWrapRef = useRef<HTMLDivElement>(null);
+
+  // Keep framer-motion transforms for fade but add GSAP scrub-continuity for hero (complies with GSAP-for-motion rule)
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ["start start", "end start"],
@@ -35,6 +38,31 @@ export const S0Cover: React.FC = () => {
 
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  // GSAP scrub-continuity for cover hero (continuous transform, no dead scroll)
+  useEffect(() => {
+    const hero = heroWrapRef.current;
+    const sec = sectionRef.current;
+    if (!hero || !sec) return;
+    const isReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (isReduced) return;
+    const st = gsap.fromTo(
+      hero,
+      { y: 0, scale: 1 },
+      {
+        y: -60,
+        scale: 0.98,
+        ease: "none",
+        scrollTrigger: {
+          trigger: sec,
+          start: "top top",
+          end: "bottom top",
+          scrub: 1,
+        },
+      }
+    );
+    return () => st.scrollTrigger?.kill();
   }, []);
 
   // GSAP Pointer Parallax with quickTo on Orbital Rings & Continuous Idle Coin Rotation
@@ -279,11 +307,12 @@ export const S0Cover: React.FC = () => {
         </span>
       </motion.div>
 
-      {/* Center hero container with clear layout (Fix Bug 1: No overlap between coin, wordmark, and seals) */}
-      <motion.div
-        style={{ y: textY, opacity: textOpacity }}
-        className="relative z-10 max-w-3xl mx-auto my-auto flex flex-col items-center px-4"
-      >
+      {/* Center hero container — wrapped for GSAP scrub (inner motion keeps text opacity scrub) */}
+      <div ref={heroWrapRef} className="relative z-10 max-w-3xl mx-auto my-auto flex flex-col items-center px-4 will-change-transform">
+        <motion.div
+          style={{ y: textY, opacity: textOpacity }}
+          className="flex flex-col items-center w-full"
+        >
         {/* $STANDARD 3D Rotating Coin (Idle GSAP yoyo + tilt) */}
         <div ref={coinContainerRef} className="mb-6 sm:mb-8 perspective-800">
           <Coin size={132} interactiveTilt={true} />
@@ -307,8 +336,9 @@ export const S0Cover: React.FC = () => {
           className="font-serif text-base sm:text-lg sm:leading-relaxed text-ink-60 max-w-[36ch] mx-auto mb-8"
         >
           {content.sub}
-        </motion.p>
-      </motion.div>
+          </motion.p>
+        </motion.div>
+      </div>
 
       {/* Bottom CTA with dynamic pulse */}
       <div className="relative z-10 w-full flex items-center justify-center pb-2">

@@ -6,6 +6,7 @@ import { formatNumber } from "../sim/formatters";
 import { Odometer } from "../atoms/Odometer";
 import { CHAPTERS_CONTENT } from "@/content/chapters";
 import { KineticText } from "../motion/KineticText";
+import { gsap, ScrollTrigger } from "@/lib/gsap";
 
 
 export const S9Ledger: React.FC = () => {
@@ -20,7 +21,7 @@ export const S9Ledger: React.FC = () => {
   const hardCap = 1_000_000_000;
   const currentMax = hardCap - burned;
 
-  // Staggered parallax reveal of the 5 recap frames
+  // Scrub-continuity: full-pin continuous transform (was short 65%->20% dead zone)
   useEffect(() => {
     const el = containerRef.current;
     const recap = recapContainerRef.current;
@@ -29,29 +30,46 @@ export const S9Ledger: React.FC = () => {
     const isReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (isReduced) return;
 
-    const frames = recap.querySelectorAll(".recap-frame-item");
+    const frames = recap.querySelectorAll<HTMLElement>(".recap-frame-item");
     if (frames.length === 0) return;
 
+    // Frame stagger now driven across full pinned scrub instead of short snap
     const st = gsap.fromTo(
       frames,
-      { opacity: 0, y: 25, filter: "grayscale(100%)" },
+      { opacity: 0, y: 28, filter: "grayscale(100%)" },
       {
         opacity: 1,
         y: 0,
         filter: "grayscale(0%)",
-        stagger: 0.12,
-        ease: "power2.out",
+        stagger: 0.08,
+        ease: "none",
         scrollTrigger: {
           trigger: el,
-          start: "top 65%",
-          end: "top 20%",
-          scrub: 0.8,
+          start: "top top",
+          end: "bottom bottom",
+          scrub: 1,
         },
       }
     );
 
+    // Continuous odometer container slight parallax across pin
+    const odometerBox = el.querySelector<HTMLElement>(".odometer-box");
+    let extra: ScrollTrigger | undefined;
+    if (odometerBox) {
+      extra = ScrollTrigger.create({
+        trigger: el,
+        start: "top top",
+        end: "bottom bottom",
+        scrub: 1,
+        onUpdate: (self) => {
+          gsap.set(odometerBox, { y: (self.progress - 0.5) * -10 });
+        },
+      });
+    }
+
     return () => {
       st.scrollTrigger?.kill();
+      extra?.kill();
     };
   }, []);
 
@@ -89,7 +107,7 @@ export const S9Ledger: React.FC = () => {
       ref={containerRef}
       className="relative min-h-[250vh] border-t border-ink/10 bg-paper select-none"
     >
-      <div className="sticky top-0 h-screen w-full flex flex-col lg:flex-row items-center justify-between p-6 sm:p-12 lg:p-16 max-w-7xl mx-auto overflow-hidden">
+      <div className="sticky top-0 h-[100svh] lg:h-screen w-full flex flex-col lg:flex-row items-center justify-between p-4 sm:p-6 lg:p-16 max-w-7xl mx-auto overflow-hidden gap-4 lg:gap-0">
         {/* Copy Column (~42% desktop) */}
         <div className="w-full lg:w-[42%] flex flex-col justify-center order-2 lg:order-1 mt-6 lg:mt-0 z-10">
           <div className="mb-3 flex items-center gap-2">
@@ -119,9 +137,9 @@ export const S9Ledger: React.FC = () => {
         </div>
 
         {/* Stage (~56% desktop): Rolling Odometers & Staggered Recap Frames */}
-        <div className="w-full lg:w-[56%] flex flex-col items-center justify-center p-4 order-1 lg:order-2">
+        <div className="w-full lg:w-[56%] flex flex-col items-center justify-center p-3 sm:p-4 order-1 lg:order-2 shrink-0">
           {/* Rolling Odometers Box */}
-          <div className="w-full p-5 border-t border-b border-gold/30 mb-4 space-y-4">
+          <div className="odometer-box w-full p-4 sm:p-5 border-t border-b border-gold/30 mb-4 space-y-4 will-change-transform">
             {/* Circulating Supply */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3.5 border-b border-ink/10">
               <span className="font-mono text-xs uppercase tracking-wider text-ink-60 font-bold mb-1 sm:mb-0">
@@ -130,7 +148,7 @@ export const S9Ledger: React.FC = () => {
               <Odometer
                 value={sCirc}
                 unit="$STANDARD"
-                className="text-2xl sm:text-3xl text-ink"
+                className="text-xl sm:text-2xl lg:text-3xl text-ink"
               />
             </div>
 
@@ -142,7 +160,7 @@ export const S9Ledger: React.FC = () => {
               <Odometer
                 value={burned}
                 unit="$STANDARD"
-                className="text-2xl sm:text-3xl text-red"
+                className="text-xl sm:text-2xl lg:text-3xl text-red"
               />
             </div>
 
