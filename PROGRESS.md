@@ -162,3 +162,45 @@ Gate result: `npx tsc --noEmit` clean (0 errors), `NODE_OPTIONS=--max-old-space-
 - `components/scenes/S9Ledger.tsx`
 - `components/scenes/S10Epilogue.tsx`
 - `PROGRESS.md`
+
+---
+
+## TASK7 — Motion Depth Audit, Debug Pass & Local Commit — DONE 2026-08-31
+Gate results: `npx tsc --noEmit` passed (0 errors). Audited against `https://living-bank.pages.dev/` across 2 full runs with fresh browser instances. Zero console errors on both runs. All fixes implemented and committed locally on `main` (commit `1416f47`).
+
+### 1. Motion Audit (Per-Chapter Scrub, Reveal & Pin Verification)
+
+| Chapter | Scrub Behavior (Early / Mid / Late) | Reveals OK | Pinned Transforms OK | Issues Found & Resolved |
+|---|---|---|---|---|
+| **Cover** | `task7_run1_sec0_cover_early.png`, `..._mid.png`, `..._late.png` | PASS | PASS | Zero text skew; continuous 3D coin rotation |
+| **I · One Door** | `task7_run1_sec1_chapter_1_early.png`, `..._mid.png`, `..._late.png` | PASS | PASS | Front-facing neoclassical bank (5 steps, 8 columns, bronze door hero view at p=0) |
+| **II · The Only Number** | `task7_run1_sec2_chapter_2_early.png`, `..._mid.png`, `..._late.png` | PASS | PASS | Lever track styled cleanly directly on paper; live coin flow |
+| **III · The Charter** | `task7_run1_sec3_chapter_3_early.png`, `..._mid.png`, `..._late.png` | PASS | PASS | "The Vault Handover" brass counter, 3D opening ledger & animated signature |
+| **IV · Growth Burns** | `task7_run1_sec4_chapter_4_early.png`, `..._mid.png`, `..._late.png` | PASS | PASS | Dutch auction exponential decay path tracing & EMBER particle furnace |
+| **V · The Temper** | `task7_run1_sec5_chapter_5_early.png`, `..._mid.png`, `..._late.png` | PASS | PASS | Direct paper dial, 14-epoch strip chart, 4-step ratchet vs 240ms slam |
+| **VI · Where Fees Go** | `task7_run1_sec6_chapter_6_early.png`, `..._mid.png`, `..._late.png` | PASS | PASS | 70/15/15 coin routing paths, POL lake water level rise |
+| **VII · The Run, Inverted** | `task7_run1_sec7_chapter_7_early.png`, `..._mid.png`, `..._late.png` | PASS | PASS | Quadratic exit toll curve, sticky banker card stacking |
+| **VIII · Ghosts** | `task7_run1_sec8_chapter_8_early.png`, `..._mid.png`, `..._late.png` | PASS | PASS | Dimmed lobby, shatter seal physics, pro-rata yield speedup |
+| **IX · The Ledger** | `task7_run1_sec9_chapter_9_early.png`, `..._mid.png`, `..._late.png` | PASS | PASS | Giant rolling odometers, ticking hard cap down on burn |
+| **X · Epilogue** | `task7_run1_sec10_chapter_10_early.png`, `..._mid.png`, `..._late.png` | PASS | PASS | Stamped seal, paper receipt summary, 1080x1080 PNG share card exporter |
+
+### 2. Functional Debug Results (2 Full Independent Runs)
+1. **Cover**: Title and coin render cleanly; scroll cue active (Run 1: PASS, Run 2: PASS).
+2. **S1 Island**: 3D Neoclassical Bank mounts, front stairs and bronze door face user at progress 0, structure glosses transition on orbit (Run 1: PASS, Run 2: PASS).
+3. **S2 Gate**: Dragging lever updates Net ETH flow, changes regime color wash and coin physics (Run 1: PASS, Run 2: PASS).
+4. **S3 Charter**: Claim button flips open 3D ledger book, reveals deed and draws signature line (`task7_run1_charter_claimed.png`, Run 1: PASS, Run 2: PASS).
+5. **S4 Furnace**: Buy license decrements balance, burns $STANDARD, triggers EMBER sparks, and increments branch pips (`task7_run1_furnace_bought.png`, Run 1: PASS, Run 2: PASS).
+6. **S5 Dial**: Inflow advances ratchet steps; Outflow slams needle down with 120ms scene shake (`task7_run1_dial_inflow.png`, Run 1: PASS, Run 2: PASS).
+7. **S6 Vaults**: Regime toggle switches routing between Gold Accumulation and Contraction Buyback (`task7_run1_vaults_contraction.png`, Run 1: PASS, Run 2: PASS).
+8. **S7 Run**: Bank run triggers quadratic toll arc rise; STAY/WITHDRAW give correct receipt (`task7_run1_bank_run_triggered.png`, Run 1: PASS, Run 2: PASS).
+9. **S8 Ghost**: Report ghost shatters seal, pays bounty, purges dormant dilution (`task7_run1_ghost_reported.png`, Run 1: PASS, Run 2: PASS).
+10. **S9 Ledger**: Odometers roll smoothly into view; supply sinks accurately reflected (Run 1: PASS, Run 2: PASS).
+11. **S10 Epilogue**: Live session values computed and exportable as high-res PNG (`task7_run1_epilogue.png`, Run 1: PASS, Run 2: PASS).
+
+### 3. Summary of Code Fixes (Committed Locally to `main`)
+- **Zero Text Skew**: Eliminated `VelocitySkew` and `velocityReactive` props from all typography.
+- **ThreeIsland Orientation**: Bank front (5 grand stairs, 8 columns, pediment medallion, bronze double door) squarely faces viewer at progress 0 (`targetOrbit = p * Math.PI * 0.45`).
+- **S3 "Vault Handover"**: Polished monumental brass bank counter, 3D rotating leather ledger cover, animated fountain pen signature path.
+- **Full-Bleed Art Direction**: Removed all grey widget containers across all scenes, embedding all interactive stages directly onto paper with engraved gold rules (`border-gold/20`).
+- **Zero Console Errors**: Maintained 0 unhandled application errors across all 11 chapters.
+
