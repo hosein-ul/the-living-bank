@@ -7,8 +7,7 @@ import { WaxSeal } from "../atoms/WaxSeal";
 import { CHAPTERS_CONTENT } from "@/content/chapters";
 import { sound } from "@/lib/sound";
 import { KineticText } from "../motion/KineticText";
-import { VelocitySkew } from "../motion/VelocitySkew";
-import { gsap, ScrollTrigger } from "@/lib/gsap";
+
 
 export const S3Charter: React.FC = () => {
   const content = CHAPTERS_CONTENT.s3;
@@ -140,8 +139,7 @@ export const S3Charter: React.FC = () => {
       <div className="sticky top-0 h-screen w-full flex flex-col lg:flex-row items-center justify-between p-6 sm:p-12 lg:p-16 max-w-7xl mx-auto overflow-hidden">
         {/* Copy Column (~42% desktop) with Velocity Skew */}
         <div className="w-full lg:w-[42%] flex flex-col justify-center order-2 lg:order-1 mt-6 lg:mt-0 z-10">
-          <VelocitySkew maxSkew={1.5}>
-            <div className="mb-3 flex items-center gap-2">
+          <div className="mb-3 flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-gold animate-live-dot" />
               <KineticText
                 text={`CHAPTER ${content.numeral} · ${content.title}`}
@@ -189,8 +187,7 @@ export const S3Charter: React.FC = () => {
                 {content.subcaption}
               </span>
             </div>
-          </VelocitySkew>
-        </div>
+          </div>
 
         {/* 3D Charter Deed Card (~55% desktop) with Clip-Path Curtain Wipe */}
         <div className="w-full lg:w-[55%] h-[420px] sm:h-[500px] lg:h-[560px] relative order-1 lg:order-2 flex items-center justify-center p-4 perspective-1000">

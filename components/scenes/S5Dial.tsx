@@ -6,8 +6,7 @@ import { Dial } from "../atoms/Dial";
 import { CHAPTERS_CONTENT } from "@/content/chapters";
 import { sound } from "@/lib/sound";
 import { KineticText } from "../motion/KineticText";
-import { VelocitySkew } from "../motion/VelocitySkew";
-import { gsap } from "@/lib/gsap";
+
 
 export const S5Dial: React.FC = () => {
   const content = CHAPTERS_CONTENT.s5;
@@ -76,8 +75,7 @@ export const S5Dial: React.FC = () => {
       <div className="sticky top-0 h-screen w-full flex flex-col lg:flex-row items-center justify-between p-6 sm:p-12 lg:p-16 max-w-7xl mx-auto overflow-hidden">
         {/* Copy Column (~42% desktop) with Velocity Skew */}
         <div className="w-full lg:w-[42%] flex flex-col justify-center order-2 lg:order-1 mt-6 lg:mt-0 z-10">
-          <VelocitySkew maxSkew={1.5}>
-            <div className="mb-3 flex items-center gap-2">
+          <div className="mb-3 flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-gold animate-live-dot" />
               <KineticText
                 text={`CHAPTER ${content.numeral} · ${content.title}`}
@@ -101,8 +99,7 @@ export const S5Dial: React.FC = () => {
                 className="font-serif italic text-gold text-sm sm:text-base tracking-wide"
               />
             </div>
-          </VelocitySkew>
-        </div>
+          </div>
 
         {/* Stage (~56% desktop) */}
         <div
